@@ -1,0 +1,7 @@
+.page {
+  padding: 2rem;
+}
+
+.page h1 {
+  color: var(--color-text);
+}

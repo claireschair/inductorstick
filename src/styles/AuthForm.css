@@ -1,0 +1,210 @@
+.auth-page {
+  display: flex;
+  justify-content: center;
+  padding: 2.5rem 1rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  width: 100%;
+  max-width: 360px;
+  padding: 1.75rem;
+  background: #fff;
+  border: 1px solid var(--color-secondary);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.07);
+}
+
+.auth-form h1 {
+  margin: 0 0 0.1rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.field-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.name-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.name-row .field-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.auth-form input {
+  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--color-secondary);
+  border-radius: 5px;
+  font-size: 0.92rem;
+  font-weight: 400;
+  color: var(--color-text);
+  background: #fff;
+  width: 100%;
+}
+
+.auth-form input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+.btn-primary {
+  padding: 0.6rem;
+  border: none;
+  border-radius: 5px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-text);
+}
+
+.btn-primary:disabled {
+  background: var(--color-secondary);
+  cursor: not-allowed;
+}
+
+.auth-switch {
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+  margin: 0;
+}
+
+.auth-switch a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.auth-error {
+  background: #fdecea;
+  color: #b3261e;
+  padding: 0.5rem 0.7rem;
+  border-radius: 5px;
+  font-size: 0.8rem;
+  margin: 0;
+  border: 1.5px solid #f3c2bd;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+}
+
+.password-input-wrapper input {
+  padding-right: 2.5rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-secondary);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  background: none;
+  color: var(--color-primary);
+}
+
+.role-select {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.role-select legend {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 0;
+  margin-bottom: 0.3rem;
+}
+
+.role-options {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.role-option {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem;
+  border: 1.5px solid var(--color-secondary);
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.role-option-selected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.role-radio-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.role-radio-dot {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.role-radio-input:checked + .role-radio-dot {
+  border-color: var(--color-primary);
+}
+
+.role-radio-input:checked + .role-radio-dot::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary);
+}
+
+.role-radio-input:focus-visible + .role-radio-dot {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

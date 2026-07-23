@@ -1,0 +1,68 @@
+const mockEmployees = [
+  {
+    id: "1",
+    firstName: "Maria",
+    lastName: "Alvarez",
+    role: "worker",
+    checkedIn: true,
+    zone: "Confined Space A",
+    status: "active",
+    lastCheckIn: "9:42 AM",
+    position: { x: 22, y: 30 },
+    sensorData: {
+      temperature: 74,
+      humidity: 45,
+      sound: 62,
+    },
+  },
+  {
+    id: "2",
+    firstName: "James",
+    lastName: "Cho",
+    role: "worker",
+    checkedIn: true,
+    zone: "Confined Space B",
+    status: "active",
+    lastCheckIn: "9:38 AM",
+    position: { x: 55, y: 62 },
+    sensorData: {
+      temperature: 76,
+      humidity: 48,
+      sound: 58,
+    },
+  },
+  {
+    id: "3",
+    firstName: "Devon",
+    lastName: "Price",
+    role: "worker",
+    checkedIn: true,
+    zone: "Rooftop C",
+    status: "overdue",
+    lastCheckIn: "8:15 AM",
+    position: { x: 80, y: 20 },
+    sensorData: {
+      temperature: 91,
+      humidity: 30,
+      sound: 71,
+    },
+  },
+  {
+    id: "4",
+    firstName: "Priya",
+    lastName: "Nair",
+    role: "worker",
+    checkedIn: false,
+    lastCheckOut: "8:02 AM",
+  },
+  {
+    id: "5",
+    firstName: "Tomas",
+    lastName: "Weber",
+    role: "worker",
+    checkedIn: false,
+    lastCheckOut: "7:47 AM",
+  },
+];
+
+export default mockEmployees;

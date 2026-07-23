@@ -1,0 +1,229 @@
+.settings-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.settings-header h1 {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.6rem;
+  color: var(--color-text);
+}
+
+.settings-subtitle {
+  margin: 0;
+  color: var(--color-secondary);
+  font-size: 0.9rem;
+}
+
+.settings-card {
+  background: #fff;
+  border: 1.5px solid var(--color-secondary);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-card h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-bg);
+  padding-bottom: 0.75rem;
+}
+
+.company-code-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: var(--color-bg);
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--color-secondary);
+  margin-top: 0.5rem;
+}
+
+.company-code-value {
+  font-family: monospace;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #fff;
+  border: 1.5px solid var(--color-secondary);
+  color: var(--color-text);
+  padding: 0.45rem 0.8rem;
+  border-radius: 5px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-promote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #e8f0fe;
+  color: #1a73e8;
+  border: 1px solid #c2e7ff;
+  padding: 0.4rem 0.75rem;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-promote:hover:not(:disabled) {
+  background: #d2e3fc;
+}
+
+.btn-promote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-demote {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #fdf2f2;
+  color: #b3261e;
+  border: 1px solid #f8d7da;
+  padding: 0.4rem 0.75rem;
+  border-radius: 5px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.btn-demote:hover:not(:disabled) {
+  background: #f8d7da;
+}
+
+.btn-demote:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.team-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.team-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  background: #fff;
+  border: 1px solid var(--color-secondary);
+  border-radius: 6px;
+}
+
+.team-member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.team-member-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.team-member-email {
+  font-size: 0.82rem;
+  color: var(--color-secondary);
+}
+
+.threshold-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.threshold-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.threshold-field label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.threshold-field input {
+  padding: 0.5rem 0.6rem;
+  border: 1.5px solid var(--color-secondary);
+  border-radius: 5px;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+.threshold-field input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.save-status {
+  font-size: 0.85rem;
+  color: #1f7a4d;
+  font-weight: 600;
+  margin: 0;
+}
+
+.threshold-readonly-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.threshold-stat-box {
+  background: var(--color-bg);
+  border: 1px solid var(--color-secondary);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.stat-box-label {
+  font-size: 0.75rem;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.stat-box-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import PasswordInput from "../../components/PasswordInput";
@@ -11,34 +11,85 @@ function Signup() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [signupType, setSignupType] = useState("create");
   const [companyName, setCompanyName] = useState("");
-  const [role, setRole] = useState("worker");
+  const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signup } = useAuth();
+  const { signup, setUserProfile } = useAuth();
   const navigate = useNavigate();
+
+  function generateCode() {
+    return "IND-" + Math.floor(1000 + Math.random() * 9000);
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     try {
+      let finalCompanyName = companyName.trim();
+      let finalCode = joinCode.trim().toUpperCase();
+
+      if (signupType === "create") {
+        if (!finalCompanyName) {
+          setError("Please enter a company name.");
+          setLoading(false);
+          return;
+        }
+        finalCode = generateCode();
+      } else {
+        if (!finalCode) {
+          setError("Please enter a company join code.");
+          setLoading(false);
+          return;
+        }
+
+        const companySnap = await getDoc(doc(db, "companies", finalCode));
+        if (!companySnap.exists()) {
+          setError("Invalid company join code. Please check with your supervisor.");
+          setLoading(false);
+          return;
+        }
+        finalCompanyName = companySnap.data().companyName || "Company";
+      }
+
       const userCredential = await signup(email, password);
-      await setDoc(doc(db, "users", userCredential.user.uid), {
+
+      const profileData = {
         firstName,
         lastName,
         email,
-        companyName,
-        role,
-      });
+        companyName: finalCompanyName,
+        companyCode: finalCode,
+        role: signupType === "create" ? "supervisor" : "worker",
+        isCreator: signupType === "create",
+      };
+
+      if (signupType === "create") {
+        await setDoc(doc(db, "companies", finalCode), {
+          companyName: finalCompanyName,
+          joinCode: finalCode,
+          createdBy: userCredential.user.uid,
+          createdAt: new Date().toISOString(),
+          tempMax: 85,
+          tempMin: 50,
+          soundMax: 90,
+          checkInInterval: 15,
+        });
+      }
+
+      await setDoc(doc(db, "users", userCredential.user.uid), profileData);
+      setUserProfile(profileData);
+
       navigate("/");
     } catch (err) {
-      setError(
-        "Failed to create an account. " +
-          (err.code === "auth/email-already-in-use"
-            ? "That email is already registered."
-            : "Please try again.")
-      );
+      if (err.code === "auth/email-already-in-use") {
+        setError("That email is already registered.");
+      } else {
+        setError("Failed to create an account. Please try again.");
+      }
       console.error(err);
     }
     setLoading(false);
@@ -83,16 +134,7 @@ function Signup() {
             required
           />
         </label>
-        <label htmlFor="signup-company" className="field-label">
-          Company Name
-          <input
-            id="signup-company"
-            type="text"
-            value={companyName}
-            onChange={(e) => setCompanyName(e.target.value)}
-            required
-          />
-        </label>
+
         <PasswordInput
           id="signup-password"
           label="Password"
@@ -103,37 +145,63 @@ function Signup() {
         />
 
         <fieldset className="role-select">
-          <legend>I am a</legend>
+          <legend>Company Action</legend>
           <div className="role-options">
-            <label className={`role-option ${role === "worker" ? "role-option-selected" : ""}`}>
+            <label className={`role-option ${signupType === "create" ? "role-option-selected" : ""}`}>
               <input
                 type="radio"
-                name="role"
-                value="worker"
-                checked={role === "worker"}
-                onChange={() => setRole("worker")}
+                name="signupType"
+                value="create"
+                checked={signupType === "create"}
+                onChange={() => setSignupType("create")}
                 className="role-radio-input"
               />
               <span className="role-radio-dot" aria-hidden="true" />
-              Worker
+              Create a Company
             </label>
-            <label className={`role-option ${role === "supervisor" ? "role-option-selected" : ""}`}>
+            <label className={`role-option ${signupType === "join" ? "role-option-selected" : ""}`}>
               <input
                 type="radio"
-                name="role"
-                value="supervisor"
-                checked={role === "supervisor"}
-                onChange={() => setRole("supervisor")}
+                name="signupType"
+                value="join"
+                checked={signupType === "join"}
+                onChange={() => setSignupType("join")}
                 className="role-radio-input"
               />
               <span className="role-radio-dot" aria-hidden="true" />
-              Supervisor
+              Join a Company
             </label>
           </div>
         </fieldset>
 
+        {signupType === "create" ? (
+          <label htmlFor="signup-company-name" className="field-label">
+            New Company Name
+            <input
+              id="signup-company-name"
+              type="text"
+              placeholder="e.g. Apex Industrial"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              required
+            />
+          </label>
+        ) : (
+          <label htmlFor="signup-join-code" className="field-label">
+            Company Join Code
+            <input
+              id="signup-join-code"
+              type="text"
+              placeholder="e.g. IND-8924"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value)}
+              required
+            />
+          </label>
+        )}
+
         <button type="submit" className="btn-primary" disabled={loading}>
-          {loading ? "Creating account..." : "Sign Up"}
+          {loading ? "Creating account..." : signupType === "create" ? "Create & Sign Up" : "Join & Sign Up"}
         </button>
 
         <p className="auth-switch">

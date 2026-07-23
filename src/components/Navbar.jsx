@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 
 function Navbar() {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, userProfile, logout } = useAuth();
   const navigate = useNavigate();
 
   async function handleLogout() {
@@ -13,12 +13,21 @@ function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar-brand">
-        Home
-      </Link>
+      <div className="navbar-left">
+        <Link to="/" className="navbar-brand">
+          InductorStick
+        </Link>
+      </div>
       <div className="navbar-links">
         {currentUser ? (
           <>
+            <Link to="/">Dashboard</Link>
+            <Link to="/settings">Settings</Link>
+            {userProfile?.role && (
+              <span className={`role-badge role-${userProfile.role}`}>
+                {userProfile.role === "supervisor" ? "Supervisor" : "Employee"}
+              </span>
+            )}
             <span className="navbar-email">{currentUser.email}</span>
             <button className="btn-link" onClick={handleLogout}>
               Log Out

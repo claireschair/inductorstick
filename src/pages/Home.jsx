@@ -9,7 +9,7 @@ import {
 import "../styles/Home.css";
 
 function Home() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
 
   return (
     <div className="home-container">
@@ -22,15 +22,9 @@ function Home() {
         <div className="hero-actions">
           {currentUser ? (
             <>
-              {userProfile?.role === "supervisor" ? (
-                <Link to="/dashboard" className="btn btn-primary">
-                  Go to Dashboard <ArrowRight size={16} />
-                </Link>
-              ) : (
-                <Link to="/settings" className="btn btn-primary">
-                  View Safety Settings <ArrowRight size={16} />
-                </Link>
-              )}
+              <Link to="/dashboard" className="btn btn-primary">
+                Go to Dashboard <ArrowRight size={16} />
+              </Link>
             </>
           ) : (
             <>
@@ -54,7 +48,7 @@ function Home() {
           <div className="simple-card">
             <Video size={22} className="card-icon" />
             <h3>Body Cam</h3>
-            <p>Cristopher Nolan is jealous of our video streaming setup.</p>
+            <p>Andy will do this manually until he finishes coding by 6pm EST SHARP.</p>
           </div>
 
           <div className="simple-card">

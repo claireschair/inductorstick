@@ -84,7 +84,11 @@ function Signup() {
       await setDoc(doc(db, "users", userCredential.user.uid), profileData);
       setUserProfile(profileData);
 
-      navigate("/");
+      if (signupType === "create") {
+        navigate("/dashboard");
+      } else {
+        navigate("/settings");
+      }
     } catch (err) {
       if (err.code === "auth/email-already-in-use") {
         setError("That email is already registered.");

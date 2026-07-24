@@ -1,15 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 
 function Navbar() {
-  const { currentUser, userProfile, logout } = useAuth();
-  const navigate = useNavigate();
-
-  async function handleLogout() {
-    await logout();
-    navigate("/login");
-  }
+  const { currentUser, userProfile } = useAuth();
 
   return (
     <nav className="navbar">
@@ -21,7 +15,7 @@ function Navbar() {
       <div className="navbar-links">
         {currentUser ? (
           <>
-            <Link to="/">Dashboard</Link>
+            <Link to="/dashboard">Dashboard</Link>
             <Link to="/settings">Settings</Link>
             <Link to="/profile">Profile</Link>
             {userProfile?.role && (

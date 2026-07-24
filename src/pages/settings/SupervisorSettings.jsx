@@ -129,7 +129,6 @@ function SupervisorSettings() {
     <div className="settings-page">
       <div className="settings-header">
         <h1>Supervisor Settings</h1>
-        <p className="settings-subtitle">Manage company configuration, safety rules, and team roles</p>
       </div>
 
       <div className="settings-card">
@@ -138,7 +137,7 @@ function SupervisorSettings() {
           <strong>Company Name:</strong> {companyName}
         </p>
         <div>
-          <span className="field-label">Shareable Join Code for Employees</span>
+          <span className="modal-detail-line"><strong>Company Join Code</strong></span>
           <div className="company-code-box">
             <span className="company-code-value">{companyCode}</span>
             <button className="btn-secondary" onClick={handleCopyCode}>
@@ -150,8 +149,7 @@ function SupervisorSettings() {
       </div>
 
       <div className="settings-card">
-        <h2>Environmental Safety Thresholds (Local Compliance)</h2>
-        <p className="settings-subtitle">Set safety limits enforced across all worker devices</p>
+        <h2>Safety Thresholds</h2>
         <form onSubmit={handleSaveThresholds} className="threshold-grid">
           <div className="threshold-field">
             <label htmlFor="temp-max">Max Safe Temp (°F)</label>
@@ -214,9 +212,7 @@ function SupervisorSettings() {
       </div>
 
       <div className="settings-card">
-        <h2>Team Members & Role Management</h2>
-        <p className="settings-subtitle">Promote employees to Supervisors or demote Supervisors back to Employees</p>
-
+        <h2>Team Management</h2>
         {loadingMembers ? (
           <p className="settings-subtitle">Loading team members...</p>
         ) : teamMembers.length === 0 ? (

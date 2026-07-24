@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
 import { ShieldCheck } from "lucide-react";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
@@ -14,17 +14,24 @@ function WorkerSettings() {
     humidityMax: 80,
     checkInInterval: 15,
   });
+  const [supervisors, setSupervisors] = useState([]);
+  const [loadingSupervisors, setLoadingSupervisors] = useState(true);
 
   const companyCode = userProfile?.companyCode || "N/A";
   const companyName = userProfile?.companyName || "Your Company";
 
   useEffect(() => {
-    async function loadCompanyThresholds() {
-      if (!userProfile?.companyCode) return;
+    async function loadCompanyData() {
+      if (!userProfile?.companyCode) {
+        setLoadingSupervisors(false);
+        return;
+      }
       try {
+        let creatorId = null;
         const compSnap = await getDoc(doc(db, "companies", userProfile.companyCode));
         if (compSnap.exists()) {
           const data = compSnap.data();
+          if (data.createdBy) creatorId = data.createdBy;
           setThresholds({
             tempMax: data.tempMax ?? 85,
             tempMin: data.tempMin ?? 50,
@@ -33,12 +40,40 @@ function WorkerSettings() {
             checkInInterval: data.checkInInterval ?? 15,
           });
         }
+
+        const q = query(
+          collection(db, "users"),
+          where("companyCode", "==", userProfile.companyCode)
+        );
+        const querySnapshot = await getDocs(q);
+        const supList = [];
+        querySnapshot.forEach((docSnap) => {
+          const userData = docSnap.data();
+          const isSupervisor =
+            userData.role === "supervisor" ||
+            userData.isCreator ||
+            docSnap.id === creatorId;
+          if (isSupervisor) {
+            supList.push({ id: docSnap.id, ...userData });
+          }
+        });
+        setSupervisors(supList);
       } catch (err) {
-        console.error(err);
+        console.error("Error loading company or supervisor data:", err);
+      } finally {
+        setLoadingSupervisors(false);
       }
     }
-    loadCompanyThresholds();
+    loadCompanyData();
   }, [userProfile?.companyCode]);
+
+  const supervisorNames =
+    supervisors.length > 0
+      ? supervisors
+          .map((s) => `${s.firstName || ""} ${s.lastName || ""}`.trim())
+          .filter(Boolean)
+          .join(", ")
+      : "N/A";
 
   return (
     <div className="settings-page">
@@ -47,9 +82,13 @@ function WorkerSettings() {
       </div>
 
       <div className="settings-card">
-        <h2>Company Affiliation</h2>
+        <h2>Company Info</h2>
         <p className="modal-detail-line">
           <strong>Company Name:</strong> {companyName}
+        </p>
+        <p className="modal-detail-line">
+          <strong>Supervisor Name:</strong>{" "}
+          {loadingSupervisors ? "Loading..." : supervisorNames}
         </p>
         <p className="modal-detail-line">
           <strong>Company Join Code:</strong> <span className="company-code-value">{companyCode}</span>

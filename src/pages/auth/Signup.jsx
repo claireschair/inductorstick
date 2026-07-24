@@ -76,6 +76,7 @@ function Signup() {
           tempMax: 85,
           tempMin: 50,
           soundMax: 90,
+          humidityMax: 80,
           checkInInterval: 15,
         });
       }

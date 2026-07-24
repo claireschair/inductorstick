@@ -16,6 +16,7 @@ function SupervisorSettings() {
   const [tempMax, setTempMax] = useState(85);
   const [tempMin, setTempMin] = useState(50);
   const [soundMax, setSoundMax] = useState(90);
+  const [humidityMax, setHumidityMax] = useState(80);
   const [checkInInterval, setCheckInInterval] = useState(15);
   const [savingThresholds, setSavingThresholds] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
@@ -35,6 +36,7 @@ function SupervisorSettings() {
           if (data.tempMax !== undefined) setTempMax(data.tempMax);
           if (data.tempMin !== undefined) setTempMin(data.tempMin);
           if (data.soundMax !== undefined) setSoundMax(data.soundMax);
+          if (data.humidityMax !== undefined) setHumidityMax(data.humidityMax);
           if (data.checkInInterval !== undefined) setCheckInInterval(data.checkInInterval);
         }
       } catch (err) {
@@ -111,6 +113,7 @@ function SupervisorSettings() {
         tempMax: Number(tempMax),
         tempMin: Number(tempMin),
         soundMax: Number(soundMax),
+        humidityMax: Number(humidityMax),
         checkInInterval: Number(checkInInterval),
       });
       setSaveMessage("Thresholds saved successfully.");
@@ -177,6 +180,16 @@ function SupervisorSettings() {
               type="number"
               value={soundMax}
               onChange={(e) => setSoundMax(e.target.value)}
+              required
+            />
+          </div>
+          <div className="threshold-field">
+            <label htmlFor="humidity-max">Max Humidity (%)</label>
+            <input
+              id="humidity-max"
+              type="number"
+              value={humidityMax}
+              onChange={(e) => setHumidityMax(e.target.value)}
               required
             />
           </div>

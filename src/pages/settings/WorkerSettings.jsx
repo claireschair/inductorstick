@@ -11,6 +11,7 @@ function WorkerSettings() {
     tempMax: 85,
     tempMin: 50,
     soundMax: 90,
+    humidityMax: 80,
     checkInInterval: 15,
   });
 
@@ -28,6 +29,7 @@ function WorkerSettings() {
             tempMax: data.tempMax ?? 85,
             tempMin: data.tempMin ?? 50,
             soundMax: data.soundMax ?? 90,
+            humidityMax: data.humidityMax ?? 80,
             checkInInterval: data.checkInInterval ?? 15,
           });
         }
@@ -72,6 +74,10 @@ function WorkerSettings() {
           <div className="threshold-stat-box">
             <span className="stat-box-label">Sound Limit</span>
             <span className="stat-box-value">{thresholds.soundMax} dB</span>
+          </div>
+          <div className="threshold-stat-box">
+            <span className="stat-box-label">Humidity Limit</span>
+            <span className="stat-box-value">{thresholds.humidityMax}%</span>
           </div>
           <div className="threshold-stat-box">
             <span className="stat-box-label">Check-In Timer</span>

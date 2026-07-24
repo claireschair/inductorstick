@@ -1,0 +1,31 @@
+.page {
+  padding: 2rem 4rem;
+}
+
+.camera-placeholder {
+  margin: 1rem 0 1.5rem 0;
+  padding: 2rem 1.5rem;
+  background: var(--color-bg);
+  border: 1.5px dashed var(--color-secondary);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.camera-placeholder p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+}
+
+.section-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 0.75rem 0;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

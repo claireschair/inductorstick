@@ -2,9 +2,9 @@ import { useState } from "react";
 import EmployeeGridItem from "../../components/EmployeeGridItem";
 import EmployeeDetailModal from "../../components/EmployeeDetailModal";
 import mockEmployees from "../../data/mockEmployees";
-import "../../styles/Dashboard.css";
+import "../../styles/SupervisorDashboard.css";
 
-function Dashboard() {
+function SupervisorDashboard() {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const activeEmployees = mockEmployees.filter((employee) => employee.checkedIn);
@@ -42,4 +42,4 @@ function Dashboard() {
   );
 }
 
-export default Dashboard;
+export default SupervisorDashboard;

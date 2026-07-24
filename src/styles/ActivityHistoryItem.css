@@ -1,0 +1,82 @@
+.activity-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.1rem;
+  background: #fff;
+  border: 1.5px solid var(--color-secondary);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.activity-item-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.activity-item-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.activity-date {
+  margin: 0.15rem 0 0 0;
+  font-size: 0.8rem;
+  color: var(--color-secondary);
+}
+
+.status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+}
+
+.status-completed {
+  background: #e3f3ea;
+  color: #1f7a4d;
+}
+
+.status-flagged {
+  background: #fdecea;
+  color: #b3261e;
+}
+
+.activity-times {
+  display: flex;
+  gap: 1.25rem;
+  font-size: 0.82rem;
+  color: var(--color-text);
+}
+
+.sensor-readings {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.2rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-bg);
+}
+
+.sensor-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sensor-label {
+  font-size: 0.7rem;
+  color: var(--color-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sensor-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}

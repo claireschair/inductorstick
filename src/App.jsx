@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
-import Home from "./pages/Home";
-import Dashboard from "./pages/supervisor/Dashboard";
+import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
+import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Settings from "./pages/settings/Settings";
@@ -13,10 +13,10 @@ function HomeRoute() {
   const { userProfile } = useAuth();
 
   if (userProfile?.role === "supervisor") {
-    return <Dashboard />;
+    return <SupervisorDashboard />;
   }
 
-  return <Home />;
+  return <WorkerDashboard />;
 }
 
 function App() {

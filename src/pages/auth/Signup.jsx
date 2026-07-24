@@ -181,7 +181,7 @@ function Signup() {
             <input
               id="signup-company-name"
               type="text"
-              placeholder="e.g. Apex Industrial"
+              placeholder="e.g. The Inductors"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
               required

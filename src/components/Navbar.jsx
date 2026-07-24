@@ -23,15 +23,12 @@ function Navbar() {
           <>
             <Link to="/">Dashboard</Link>
             <Link to="/settings">Settings</Link>
+            <Link to="/profile">Profile</Link>
             {userProfile?.role && (
               <span className={`role-badge role-${userProfile.role}`}>
                 {userProfile.role === "supervisor" ? "Supervisor" : "Employee"}
               </span>
             )}
-            <span className="navbar-email">{currentUser.email}</span>
-            <button className="btn-link" onClick={handleLogout}>
-              Log Out
-            </button>
           </>
         ) : (
           <>

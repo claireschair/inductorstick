@@ -5,6 +5,7 @@ import Dashboard from "./pages/supervisor/Dashboard";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Settings from "./pages/settings/Settings";
+import Profile from "./pages/Profile";
 import { useAuth } from "./context/AuthContext";
 import "./styles/App.css";
 
@@ -25,6 +26,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomeRoute />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>

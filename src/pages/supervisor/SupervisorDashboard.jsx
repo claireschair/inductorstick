@@ -11,7 +11,7 @@ function SupervisorDashboard() {
   const inactiveEmployees = mockEmployees.filter((employee) => !employee.checkedIn);
 
   return (
-    <div className="page">
+    <div className="supervisor-page">
       <h1>Team Overview</h1>
 
       <h2 className="section-heading">Checked In</h2>

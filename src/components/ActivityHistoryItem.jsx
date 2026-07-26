@@ -1,10 +1,10 @@
 import "../styles/ActivityHistoryItem.css";
 
-function ActivityHistoryItem({ session }) {
+function ActivityHistoryItem({ session, onClick }) {
   const { zone, date, checkIn, checkOut, duration, status, sensorSummary } = session;
 
   return (
-    <div className="activity-item">
+    <button className="activity-item activity-item-clickable" onClick={onClick}>
       <div className="activity-item-header">
         <div>
           <h3>{zone}</h3>
@@ -33,7 +33,7 @@ function ActivityHistoryItem({ session }) {
           <span className="sensor-value">{sensorSummary.maxSound} dB</span>
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 

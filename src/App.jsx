@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
@@ -7,6 +7,7 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import Settings from "./pages/settings/Settings";
 import Profile from "./pages/Profile";
+import Larp from "./pages/Larp";
 import { useAuth } from "./context/AuthContext";
 import "./styles/App.css";
 
@@ -21,9 +22,11 @@ function DashboardRoute() {
 }
 
 function App() {
+  const location = useLocation();
+
   return (
     <>
-      <Navbar />
+      {location.pathname !== "/larp" && <Navbar />}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<DashboardRoute />} />
@@ -31,6 +34,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/larp" element={<Larp />} />
       </Routes>
     </>
   );

@@ -58,10 +58,6 @@ function Home() {
           </div>
         </div>
       </section>
-
-      <footer className="home-footer">
-        <p>InductorStick Worker Safety System</p>
-      </footer>
     </div>
   );
 }

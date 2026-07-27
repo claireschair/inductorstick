@@ -1,0 +1,153 @@
+.larp-simple-container {
+  min-height: 100vh;
+  width: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  padding: 20px 3rem;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.larp-top-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+.larp-title {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: var(--color-primary);
+}
+
+.larp-main-layout {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  flex: 1;
+  align-items: flex-start;
+}
+
+.larp-screen {
+  flex: 1;
+  border: 2px solid var(--color-secondary);
+  background: #ffffff;
+  padding: 16px;
+  border-radius: 6px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.larp-label {
+  font-size: 0.9rem;
+  color: var(--color-secondary);
+  margin-bottom: 6px;
+}
+
+.larp-id-display {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--color-text);
+  background: var(--color-bg);
+  padding: 8px 12px;
+  border: 1px solid var(--color-secondary);
+  border-radius: 4px;
+  min-height: 48px;
+}
+
+.larp-status-msg {
+  font-size: 1.2rem;
+  color: var(--color-primary);
+  font-weight: bold;
+}
+
+.larp-success-msg {
+  font-size: 1.3rem;
+  color: var(--color-accent);
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+
+.larp-reset-btn {
+  background: var(--color-secondary);
+  color: #ffffff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.larp-pad {
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.larp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.larp-btn {
+  padding: 12px 0;
+  font-size: 1.3rem;
+  font-weight: bold;
+  background: #ffffff;
+  color: var(--color-text);
+  border: 1px solid var(--color-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.larp-btn:active {
+  background: var(--color-bg);
+}
+
+.larp-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.larp-btn-clr {
+  font-size: 0.9rem;
+  color: #b3552f;
+}
+
+.larp-btn-del {
+  font-size: 0.9rem;
+}
+
+.larp-submit-btn {
+  padding: 12px;
+  font-size: 1.1rem;
+  font-weight: bold;
+  background: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.larp-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) and (orientation: portrait) {
+  .larp-simple-container {
+    padding: 12px 1rem;
+  }
+  .larp-main-layout {
+    flex-direction: column;
+  }
+  .larp-pad {
+    width: 100%;
+  }
+}

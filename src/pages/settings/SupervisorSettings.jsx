@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
-import { Copy, Check, UserCheck, UserMinus, Shield } from "lucide-react";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/Settings.css";
@@ -58,7 +57,7 @@ function SupervisorSettings() {
         const querySnapshot = await getDocs(q);
         const members = [];
         querySnapshot.forEach((docSnap) => {
-          members.push({ id: docSnap.id, ...docSnap.data() });
+          members.push({ docId: docSnap.id, ...docSnap.data() });
         });
         setTeamMembers(members);
       } catch (err) {
@@ -77,22 +76,22 @@ function SupervisorSettings() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  async function handleRoleChange(memberId, newRole) {
-    if (memberId === creatorId || memberId === currentUser?.uid) return;
+  async function handleRoleChange(targetDocId, newRole) {
+    if (targetDocId === creatorId || targetDocId === currentUser?.uid) return;
 
-    setPromotingId(memberId);
+    setPromotingId(targetDocId);
     try {
-      await updateDoc(doc(db, "users", memberId), {
+      await updateDoc(doc(db, "users", targetDocId), {
         role: newRole,
       });
 
       setTeamMembers((prev) =>
         prev.map((member) =>
-          member.id === memberId ? { ...member, role: newRole } : member
+          member.docId === targetDocId ? { ...member, role: newRole } : member
         )
       );
 
-      if (memberId === currentUser?.uid) {
+      if (targetDocId === currentUser?.uid) {
         await refreshProfile();
       }
     } catch (err) {
@@ -141,7 +140,6 @@ function SupervisorSettings() {
           <div className="company-code-box">
             <span className="company-code-value">{companyCode}</span>
             <button className="btn-secondary" onClick={handleCopyCode}>
-              {copied ? <Check size={16} /> : <Copy size={16} />}
               {copied ? "Copied!" : "Copy Code"}
             </button>
           </div>
@@ -220,15 +218,18 @@ function SupervisorSettings() {
         ) : (
           <div className="team-list">
             {teamMembers.map((member) => {
-              const isCreator = member.id === creatorId || member.isCreator || member.isOwner || member.role === "owner";
-              const isSelf = member.id === currentUser?.uid;
+              const isCreator = member.docId === creatorId || member.isCreator || member.isOwner || member.role === "owner";
+              const isSelf = member.docId === currentUser?.uid;
               return (
-                <div key={member.id} className="team-member-item">
+                <div key={member.docId} className="team-member-item">
                   <div className="team-member-info">
                     <div className="team-member-name">
                       {member.firstName} {member.lastName}
+                      <span style={{ fontSize: "0.85rem", color: "var(--color-primary)", fontWeight: "bold", marginLeft: "0.4rem" }}>
+                        (ID #{member.id ?? "N/A"})
+                      </span>
                       <span className={`role-badge role-${member.role}`}>
-                        {isCreator ? "Primary Supervisor" : member.role === "supervisor" ? "Supervisor" : "Employee"}
+                        {isCreator ? "Big Man Himself" : member.role === "supervisor" ? "Supervisor" : "Employee"}
                       </span>
                     </div>
                     <span className="team-member-email">{member.email}</span>
@@ -237,29 +238,27 @@ function SupervisorSettings() {
                   <div>
                     {isCreator ? (
                       <span className="settings-subtitle" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                        <Shield size={15} color="var(--color-primary)" /> Creator (Locked)
+                        Creator (Locked)
                       </span>
                     ) : isSelf ? (
                       <span className="settings-subtitle" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                        <Shield size={15} color="var(--color-secondary)" /> You (Supervisor)
+                        You (Supervisor)
                       </span>
                     ) : member.role === "supervisor" ? (
                       <button
                         className="btn-demote"
-                        onClick={() => handleRoleChange(member.id, "worker")}
-                        disabled={promotingId === member.id}
+                        onClick={() => handleRoleChange(member.docId, "worker")}
+                        disabled={promotingId === member.docId}
                       >
-                        <UserMinus size={15} />
-                        {promotingId === member.id ? "Demoting..." : "Demote to Employee"}
+                        {promotingId === member.docId ? "Demoting..." : "Demote to Employee"}
                       </button>
                     ) : (
                       <button
                         className="btn-promote"
-                        onClick={() => handleRoleChange(member.id, "supervisor")}
-                        disabled={promotingId === member.id}
+                        onClick={() => handleRoleChange(member.docId, "supervisor")}
+                        disabled={promotingId === member.docId}
                       >
-                        <UserCheck size={15} />
-                        {promotingId === member.id ? "Promoting..." : "Promote to Supervisor"}
+                        {promotingId === member.docId ? "Promoting..." : "Promote to Supervisor"}
                       </button>
                     )}
                   </div>

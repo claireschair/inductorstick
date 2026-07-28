@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, runTransaction } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import PasswordInput from "../../components/PasswordInput";
@@ -57,7 +57,21 @@ function Signup() {
 
       const userCredential = await signup(email, password);
 
+      let newUserId = 1;
+      const counterRef = doc(db, "counters", "users");
+      await runTransaction(db, async (transaction) => {
+        const counterSnap = await transaction.get(counterRef);
+        if (counterSnap.exists()) {
+          newUserId = (counterSnap.data().count || 0) + 1;
+          transaction.update(counterRef, { count: newUserId });
+        } else {
+          newUserId = 1;
+          transaction.set(counterRef, { count: 1 });
+        }
+      });
+
       const profileData = {
+        id: newUserId,
         firstName,
         lastName,
         email,
@@ -65,6 +79,8 @@ function Signup() {
         companyCode: finalCode,
         role: signupType === "create" ? "supervisor" : "worker",
         isCreator: signupType === "create",
+        checkedIn: false,
+        activeSessionId: null,
       };
 
       if (signupType === "create") {

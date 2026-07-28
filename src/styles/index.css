@@ -1,9 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
+
 :root {
---color-bg: #f2ece1;
---color-text: #3d3229;
---color-primary: #b3552f;
---color-secondary: #a89984;
---color-accent: #5f8f8a;
+  --font-body: 'Rubik', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --color-bg: #f2ece1;
+  --color-text: #3d3229;
+  --color-primary: #b3552f;
+  --color-secondary: #a89984;
+  --color-accent: #5f8f8a;
 }
 
 * {
@@ -14,4 +18,43 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+button,
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-promote,
+.btn-demote,
+.larp-btn,
+.larp-checkin-btn,
+.larp-checkout-btn,
+.larp-reset-btn {
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+button:focus,
+button:focus-visible,
+button:active,
+button:hover,
+.btn:focus,
+.btn:focus-visible,
+.btn:active,
+.btn:hover {
+  outline: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+code, pre, .font-mono {
+  font-family: var(--font-mono);
 }

@@ -78,6 +78,9 @@ function Profile() {
       <div className="settings-card">
         <h2>Account Information</h2>
         <p className="modal-detail-line">
+          <strong>ID:</strong> <span className="company-code-value">#{userProfile?.id ?? "N/A"}</span>
+        </p>
+        <p className="modal-detail-line">
           <strong>Email:</strong> {currentUser?.email}
         </p>
         <p className="modal-detail-line">
@@ -150,7 +153,7 @@ function Profile() {
       <div className="settings-card">
         <h2>Session</h2>
         <div className="inline-actions">
-          <button className="btn-secondary" onClick={handleLogout}>
+          <button className="btn-danger" onClick={handleLogout}>
             Log Out
           </button>
         </div>

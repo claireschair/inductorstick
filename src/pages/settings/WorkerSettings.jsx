@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, doc, getDoc } from "firebase/firestore";
-import { ShieldCheck } from "lucide-react";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import "../../styles/Settings.css";
@@ -98,7 +97,6 @@ function WorkerSettings() {
       <div className="settings-card">
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
           <h2>Supervisor Safety Rules</h2>
-          <ShieldCheck size={20} color="var(--color-primary)" />
         </div>
 
         <div className="threshold-readonly-grid">
@@ -123,19 +121,6 @@ function WorkerSettings() {
             <span className="stat-box-value">{thresholds.checkInInterval} mins</span>
           </div>
         </div>
-      </div>
-
-      <div className="settings-card">
-        <h2>My Account</h2>
-        <p className="modal-detail-line">
-          <strong>Name:</strong> {userProfile?.firstName} {userProfile?.lastName}
-        </p>
-        <p className="modal-detail-line">
-          <strong>Email:</strong> {userProfile?.email}
-        </p>
-        <p className="modal-detail-line">
-          <strong>Role:</strong> Employee
-        </p>
       </div>
     </div>
   );

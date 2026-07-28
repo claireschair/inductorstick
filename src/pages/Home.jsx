@@ -1,11 +1,5 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import {
-  ArrowRight,
-  Activity,
-  Video,
-  AlertTriangle
-} from "lucide-react";
 import "../styles/Home.css";
 
 function Home() {
@@ -23,13 +17,13 @@ function Home() {
           {currentUser ? (
             <>
               <Link to="/dashboard" className="btn btn-primary">
-                Go to Dashboard <ArrowRight size={16} />
+                Go to Dashboard
               </Link>
             </>
           ) : (
             <>
               <Link to="/signup" className="btn btn-primary">
-                Get Started <ArrowRight size={16} />
+                Get Started
               </Link>
               <Link to="/login" className="btn btn-secondary">
                 Sign In
@@ -40,21 +34,18 @@ function Home() {
 
         <div className="simple-cards">
           <div className="simple-card">
-            <Activity size={22} className="card-icon" />
-            <h3>Real-Time Sensor Data</h3>
+            <h3>Live Sensor Data</h3>
             <p>Our sensors all come from a 60 dollar kit, but that don't mean we can't get workers some safety.</p>
           </div>
 
           <div className="simple-card">
-            <Video size={22} className="card-icon" />
             <h3>Body Cam</h3>
-            <p>Andy will do this manually until he finishes coding by 6pm EST SHARP.</p>
+            <p>Andy will manually take pictures and upload them until he finishes coding by 6pm EST SHARP.</p>
           </div>
 
           <div className="simple-card">
-            <AlertTriangle size={22} className="card-icon" />
-            <h3>Worker Safety Alerts</h3>
-            <p>We will alert your most of the time, but sometimes marking them as dead is more convenient.</p>
+            <h3>Safety Alerts</h3>
+            <p>We will alert you most of the time, but marking them as dead is sometimes more convenient.</p>
           </div>
         </div>
       </section>

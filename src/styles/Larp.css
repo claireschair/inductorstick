@@ -58,19 +58,30 @@
   border: 1px solid var(--color-secondary);
   border-radius: 4px;
   min-height: 48px;
+  font-family: var(--font-mono);
 }
 
 .larp-status-msg {
   font-size: 1.2rem;
   color: var(--color-primary);
   font-weight: bold;
+  font-family: var(--font-mono);
 }
 
 .larp-success-msg {
   font-size: 1.3rem;
-  color: var(--color-accent);
+  color: #1e7e34;
   font-weight: bold;
   margin-bottom: 12px;
+  font-family: var(--font-mono);
+}
+
+.larp-error-msg {
+  font-size: 1.2rem;
+  color: #bd2130;
+  font-weight: bold;
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
 }
 
 .larp-reset-btn {
@@ -80,10 +91,11 @@
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
+  margin-top: 8px;
 }
 
 .larp-pad {
-  width: 260px;
+  width: 280px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -104,6 +116,7 @@
   border: 1px solid var(--color-secondary);
   border-radius: 4px;
   cursor: pointer;
+  font-family: var(--font-mono);
 }
 
 .larp-btn:active {
@@ -124,18 +137,42 @@
   font-size: 0.9rem;
 }
 
-.larp-submit-btn {
-  padding: 12px;
-  font-size: 1.1rem;
+.larp-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.larp-checkin-btn {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 1rem;
   font-weight: bold;
-  background: var(--color-primary);
+  background: #28a745;
   color: #ffffff;
   border: none;
   border-radius: 4px;
   cursor: pointer;
 }
 
-.larp-submit-btn:disabled {
+.larp-checkin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.larp-checkout-btn {
+  flex: 1;
+  padding: 12px 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  background: #dc3545;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.larp-checkout-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

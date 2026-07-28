@@ -78,12 +78,11 @@
 .btn-primary {
   background: var(--color-primary);
   color: #ffffff;
-  box-shadow: 0 3px 8px rgba(179, 85, 47, 0.25);
+  box-shadow: none;
 }
 
 .btn-primary:hover {
   background: #9d4826;
-  transform: translateY(-1px);
 }
 
 .btn-secondary {

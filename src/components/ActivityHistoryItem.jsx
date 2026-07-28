@@ -10,7 +10,9 @@ function ActivityHistoryItem({ session, onClick }) {
         <div>
           <h3>{sessionTitle}</h3>
         </div>
-        <span className={`status-badge status-${status}`}>{status}</span>
+        {status && status !== "completed" && (
+          <span className={`status-badge status-${status}`}>{status}</span>
+        )}
       </div>
 
       <div className="activity-times">

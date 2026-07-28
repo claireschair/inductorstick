@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400..800;1,400..800&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap');
 :root {
-  --font-body: 'Rubik', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Merriweather', serif;
+  --font-mono: 'Merriweather', monospace;
   --color-bg: #f2ece1;
   --color-text: #3d3229;
   --color-primary: #b3552f;
@@ -10,8 +9,11 @@
   --color-accent: #5f8f8a;
 }
 
-* {
+*, *::before, *::after {
   box-sizing: border-box;
+  border-radius: 0 !important;
+  transition: none !important;
+  animation: none !important;
 }
 
 body {

@@ -5,7 +5,7 @@
   padding: 1.1rem;
   background: #fff;
   border: 1.5px solid var(--color-secondary);
-  border-radius: 8px;
+  border-radius: 0;
   box-shadow: none;
   text-align: left;
   width: 100%;
@@ -14,7 +14,7 @@
 
 .employee-card-clickable {
   cursor: pointer;
-  transition: border-color 0.15s ease;
+
 }
 
 .employee-card-clickable:hover {
@@ -57,7 +57,7 @@
   text-transform: uppercase;
   letter-spacing: 0.02em;
   padding: 0.25rem 0.55rem;
-  border-radius: 4px;
+  border-radius: 0;
   font-family: var(--font-mono);
   white-space: nowrap;
   display: inline-block;
@@ -98,18 +98,7 @@
   color: #92400e;
 }
 
-.pulse-icon {
-  animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
 
-@keyframes pulse-ring {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
 
 .employee-zone {
   margin: 0;

@@ -89,7 +89,7 @@ function Profile() {
       </div>
 
       <div className="settings-card">
-        <h2>Edit Name</h2>
+        <h2>Change Name</h2>
         <form onSubmit={handleProfileSave} className="profile-form">
           <div className="name-fields">
             <label htmlFor="profile-first-name" className="field-label">

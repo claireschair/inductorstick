@@ -16,7 +16,7 @@
 .profile-form input {
   padding: 0.5rem 0.6rem;
   border: 1.5px solid var(--color-secondary);
-  border-radius: 5px;
+  border-radius: 0;
   font-size: 0.92rem;
   color: var(--color-text);
   background: #fff;

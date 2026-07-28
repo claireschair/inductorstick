@@ -11,7 +11,9 @@ function SessionDetailModal({ session, onClose }) {
         <div className="modal-header">
           <div>
             <h2>{sessionTitle}</h2>
-            <span className={`status-badge status-${status}`}>{status}</span>
+            {status && status !== "completed" && (
+              <span className={`status-badge status-${status}`}>{status}</span>
+            )}
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             ✕
@@ -26,7 +28,7 @@ function SessionDetailModal({ session, onClose }) {
         </div>
 
         <div className="modal-section">
-          <h3>Session Details</h3>
+          <h3>Details</h3>
           <p className="modal-detail-line">Date: {date}</p>
           <p className="modal-detail-line">Check-in: {checkIn || "Active"}</p>
           <p className="modal-detail-line">Check-out: {checkOut || "In Progress"}</p>
@@ -34,7 +36,7 @@ function SessionDetailModal({ session, onClose }) {
         </div>
 
         <div className="modal-section">
-          <h3>Overall Sensor Summary</h3>
+          <h3>Summary</h3>
           <div className="modal-sensor-grid">
             <div className="sensor-stat">
               <span className="sensor-label">Avg Temp</span>
@@ -53,8 +55,8 @@ function SessionDetailModal({ session, onClose }) {
 
         {minuteData && minuteData.length > 0 && (
           <div className="modal-section">
-            <h3>Minute-by-Minute Averages</h3>
-            <div style={{ maxHeight: "160px", overflowY: "auto", border: "1px solid var(--color-secondary)", borderRadius: "4px", padding: "8px" }}>
+            <h3>Historical Data</h3>
+            <div style={{ maxHeight: "160px", overflowY: "auto", border: "1px solid var(--color-secondary)", borderRadius: "0px", padding: "8px" }}>
               <table style={{ width: "100%", textAlign: "left", fontSize: "0.85rem", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ borderBottom: "1px solid var(--color-secondary)" }}>

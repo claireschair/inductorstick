@@ -128,9 +128,9 @@ function SupervisorDashboard() {
       {loading ? (
         <p>Loading team members...</p>
       ) : employeesWithSessionData.length === 0 ? (
-        <div className="empty-state" style={{ padding: "20px", background: "#ffffff", borderRadius: "6px", border: "1px solid var(--color-secondary)" }}>
+        <div className="empty-state" style={{ padding: "20px", background: "#ffffff", borderRadius: "0px", border: "1px solid var(--color-secondary)" }}>
           <p style={{ margin: 0, color: "var(--color-secondary)" }}>
-            No registered workers found in company {userProfile?.companyCode || ""}.
+            No workers found in company {userProfile?.companyCode || ""}.
           </p>
         </div>
       ) : (

@@ -22,7 +22,7 @@
 .settings-card {
   background: #fff;
   border: 1.5px solid var(--color-secondary);
-  border-radius: 8px;
+  border-radius: 0;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -44,7 +44,7 @@
   gap: 0.75rem;
   background: var(--color-bg);
   padding: 0.8rem 1rem;
-  border-radius: 6px;
+  border-radius: 0;
   border: 1px solid var(--color-secondary);
   margin-top: 0.5rem;
 }
@@ -65,11 +65,11 @@
   border: 1.5px solid var(--color-secondary);
   color: var(--color-text);
   padding: 0.45rem 0.8rem;
-  border-radius: 5px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+
 }
 
 .btn-secondary:hover {
@@ -85,11 +85,11 @@
   border: 1.5px solid #dc2626;
   color: #ffffff;
   padding: 0.45rem 0.85rem;
-  border-radius: 5px;
+  border-radius: 0;
   font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+
 }
 
 .btn-danger:hover {
@@ -101,19 +101,27 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: #e8f0fe;
-  color: #1a73e8;
-  border: 1px solid #c2e7ff;
-  padding: 0.4rem 0.75rem;
-  border-radius: 5px;
+  background: var(--color-primary);
+  color: #ffffff;
+  border: 1px solid var(--color-primary);
+  padding: 0.45rem 0.85rem;
+  border-radius: 0;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+
 }
 
 .btn-promote:hover:not(:disabled) {
-  background: #d2e3fc;
+  background: #9d4826;
+  border-color: #9d4826;
+}
+
+.role-tag-dash {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--color-secondary);
+  margin-left: 0.4rem;
 }
 
 .btn-promote:disabled {
@@ -129,11 +137,11 @@
   color: #b3261e;
   border: 1px solid #f8d7da;
   padding: 0.4rem 0.75rem;
-  border-radius: 5px;
+  border-radius: 0;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s ease;
+
 }
 
 .btn-demote:hover:not(:disabled) {
@@ -158,7 +166,7 @@
   padding: 0.8rem 1rem;
   background: #fff;
   border: 1px solid var(--color-secondary);
-  border-radius: 6px;
+  border-radius: 0;
 }
 
 .team-member-info {
@@ -202,7 +210,7 @@
 .threshold-field input {
   padding: 0.5rem 0.6rem;
   border: 1.5px solid var(--color-secondary);
-  border-radius: 5px;
+  border-radius: 0;
   font-size: 0.9rem;
   width: 100%;
   font-family: var(--font-mono);
@@ -229,7 +237,7 @@
 .threshold-stat-box {
   background: var(--color-bg);
   border: 1px solid var(--color-secondary);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 0.75rem 1rem;
   display: flex;
   flex-direction: column;

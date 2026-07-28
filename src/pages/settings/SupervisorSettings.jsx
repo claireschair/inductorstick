@@ -6,7 +6,6 @@ import "../../styles/Settings.css";
 
 function SupervisorSettings() {
   const { currentUser, userProfile, refreshProfile } = useAuth();
-  const [copied, setCopied] = useState(false);
   const [teamMembers, setTeamMembers] = useState([]);
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [promotingId, setPromotingId] = useState(null);
@@ -70,12 +69,6 @@ function SupervisorSettings() {
     loadTeamMembers();
   }, [userProfile?.companyCode]);
 
-  function handleCopyCode() {
-    navigator.clipboard.writeText(companyCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
   async function handleRoleChange(targetDocId, newRole) {
     if (targetDocId === creatorId || targetDocId === currentUser?.uid) return;
 
@@ -127,27 +120,21 @@ function SupervisorSettings() {
   return (
     <div className="settings-page">
       <div className="settings-header">
-        <h1>Supervisor Settings</h1>
+        <h1>Settings</h1>
       </div>
 
       <div className="settings-card">
-        <h2>Company Information</h2>
+        <h2>Company Info</h2>
         <p className="modal-detail-line">
           <strong>Company Name:</strong> {companyName}
         </p>
         <div>
-          <span className="modal-detail-line"><strong>Company Join Code</strong></span>
-          <div className="company-code-box">
-            <span className="company-code-value">{companyCode}</span>
-            <button className="btn-secondary" onClick={handleCopyCode}>
-              {copied ? "Copied!" : "Copy Code"}
-            </button>
-          </div>
+          <p className="modal-detail-line"><strong>Company Join Code:</strong> <span className="company-code-value">{companyCode}</span></p>
         </div>
       </div>
 
       <div className="settings-card">
-        <h2>Safety Thresholds</h2>
+        <h2>Sensor Thresholds</h2>
         <form onSubmit={handleSaveThresholds} className="threshold-grid">
           <div className="threshold-field">
             <label htmlFor="temp-max">Max Safe Temp (°F)</label>
@@ -228,8 +215,8 @@ function SupervisorSettings() {
                       <span style={{ fontSize: "0.85rem", color: "var(--color-primary)", fontWeight: "bold", marginLeft: "0.4rem" }}>
                         (ID #{member.id ?? "N/A"})
                       </span>
-                      <span className={`role-badge role-${member.role}`}>
-                        {isCreator ? "Big Man Himself" : member.role === "supervisor" ? "Supervisor" : "Employee"}
+                      <span className="role-tag-dash">
+                        — {isCreator ? "Head Supervisor" : member.role === "supervisor" ? "Supervisor" : "Employee"}
                       </span>
                     </div>
                     <span className="team-member-email">{member.email}</span>
@@ -238,7 +225,7 @@ function SupervisorSettings() {
                   <div>
                     {isCreator ? (
                       <span className="settings-subtitle" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
-                        Creator (Locked)
+                        (Locked)
                       </span>
                     ) : isSelf ? (
                       <span className="settings-subtitle" style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}>
@@ -250,7 +237,7 @@ function SupervisorSettings() {
                         onClick={() => handleRoleChange(member.docId, "worker")}
                         disabled={promotingId === member.docId}
                       >
-                        {promotingId === member.docId ? "Demoting..." : "Demote to Employee"}
+                        {promotingId === member.docId ? "Demoting..." : "Demote"}
                       </button>
                     ) : (
                       <button
@@ -258,7 +245,7 @@ function SupervisorSettings() {
                         onClick={() => handleRoleChange(member.docId, "supervisor")}
                         disabled={promotingId === member.docId}
                       >
-                        {promotingId === member.docId ? "Promoting..." : "Promote to Supervisor"}
+                        {promotingId === member.docId ? "Promoting..." : "Promote"}
                       </button>
                     )}
                   </div>

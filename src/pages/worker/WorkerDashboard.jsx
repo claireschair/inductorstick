@@ -49,13 +49,12 @@ function WorkerDashboard() {
 
   return (
     <div className="worker-page">
-      <h1>My Activity</h1>
+      <h1>Recent Sessions</h1>
 
-      <h2 className="section-heading">Recent Sessions</h2>
       {loading ? (
         <p>Loading activity sessions...</p>
       ) : sessions.length === 0 ? (
-        <div className="empty-state" style={{ padding: "20px", background: "#ffffff", borderRadius: "6px", border: "1px solid var(--color-secondary)" }}>
+        <div className="empty-state" style={{ padding: "20px", background: "#ffffff", borderRadius: "0px", border: "1px solid var(--color-secondary)" }}>
           <p style={{ margin: 0, color: "var(--color-secondary)" }}>
             No activity sessions recorded yet. Enter your Worker ID #{userProfile?.id || ""} on the Terminal page to check in.
           </p>

@@ -34,7 +34,6 @@ function EmployeeGridItem({ employee, onClick }) {
           <h3>
             {firstName} {lastName}
           </h3>
-          <span className="status-badge status-inactive">not checked in</span>
         </div>
         <p className="employee-checkin">Last checked out: {displayCheckOut}</p>
       </div>

@@ -77,7 +77,7 @@ function WorkerSettings() {
   return (
     <div className="settings-page">
       <div className="settings-header">
-        <h1>Employee Settings</h1>
+        <h1>Settings</h1>
       </div>
 
       <div className="settings-card">
@@ -96,7 +96,7 @@ function WorkerSettings() {
 
       <div className="settings-card">
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <h2>Supervisor Safety Rules</h2>
+          <h2>Sensor Thresholds</h2>
         </div>
 
         <div className="threshold-readonly-grid">

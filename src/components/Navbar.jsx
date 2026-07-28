@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import "../styles/Navbar.css";
 
 function Navbar() {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser } = useAuth();
 
   return (
     <nav className="navbar">
@@ -18,11 +18,6 @@ function Navbar() {
             <Link to="/dashboard">Dashboard</Link>
             <Link to="/settings">Settings</Link>
             <Link to="/profile">Profile</Link>
-            {userProfile?.role && (
-              <span className={`role-badge role-${userProfile.role}`}>
-                {userProfile.role === "supervisor" ? "Supervisor" : "Employee"}
-              </span>
-            )}
           </>
         ) : (
           <>

@@ -1,17 +1,24 @@
 import { useEffect, useState, useRef } from "react";
-import { collection, onSnapshot, query, where, getDocs, doc, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection, onSnapshot, query, where, getDocs, doc, updateDoc, arrayUnion, deleteDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { TelemetryContext } from "./TelemetryContext";
 
 export function TelemetryProvider({ children }) {
   const [telemetryMap, setTelemetryMap] = useState({});
   const [loadingTelemetry, setLoadingTelemetry] = useState(true);
+  const [activeSessionsByUserId, setActiveSessionsByUserId] = useState({});
+  const [alerts, setAlerts] = useState([]);
   const bufferRef = useRef({});
   const telemetryMapRef = useRef({});
+  const activeSessionsRef = useRef({});
 
   useEffect(() => {
     telemetryMapRef.current = telemetryMap;
   }, [telemetryMap]);
+
+  useEffect(() => {
+    activeSessionsRef.current = activeSessionsByUserId;
+  }, [activeSessionsByUserId]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -34,6 +41,32 @@ export function TelemetryProvider({ children }) {
       (err) => {
         console.error(err);
         setLoadingTelemetry(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const sessionsRef = collection(db, "sessions");
+    const q = query(sessionsRef, where("status", "==", "active"));
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const sessionMap = {};
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          sessionMap[String(data.userId)] = {
+            sessionId: docSnap.id,
+            workerName: data.workerName,
+            zone: data.zone,
+          };
+        });
+        setActiveSessionsByUserId(sessionMap);
+      },
+      (err) => {
+        console.error(err);
       }
     );
 
@@ -118,6 +151,40 @@ export function TelemetryProvider({ children }) {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "alerts"),
+      (snapshot) => {
+        const alertList = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          const deviceId = String(docSnap.id);
+          const session = activeSessionsRef.current[deviceId];
+          return {
+            deviceId,
+            status: data.status,
+            createdAt: data.createdAt,
+            workerName: session?.workerName || `Worker #${deviceId}`,
+            zone: session?.zone || "Unknown Zone",
+          };
+        });
+        setAlerts(alertList);
+      },
+      (err) => {
+        console.error(err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  async function dismissAlert(deviceId) {
+    try {
+      await deleteDoc(doc(db, "alerts", deviceId));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   const getDeviceTelemetry = (id) => {
     return telemetryMap[String(id)] || null;
   };
@@ -126,6 +193,9 @@ export function TelemetryProvider({ children }) {
     telemetryMap,
     loadingTelemetry,
     getDeviceTelemetry,
+    activeSessionsByUserId,
+    alerts,
+    dismissAlert,
   };
 
   return (

@@ -72,6 +72,14 @@ const server = http.createServer((req, res) => {
 
         await setDoc(doc(db, "telemetry", deviceId), telemetryData, { merge: true });
 
+        if (payload.status === "panic" || payload.status === "supervisor_call") {
+          await setDoc(doc(db, "alerts", deviceId), {
+            deviceId: payload.id ?? 1,
+            status: payload.status,
+            createdAt: new Date().toISOString(),
+          });
+        }
+
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true, id: deviceId }));
       } catch (err) {

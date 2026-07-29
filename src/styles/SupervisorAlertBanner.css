@@ -1,0 +1,42 @@
+.alert-banner-stack {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+}
+
+.alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  text-align: center;
+}
+
+.alert-banner-dismiss {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  color: #fff;
+  padding: 0.3rem 0.7rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.alert-banner-dismiss:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.alert-banner-panic {
+  background: #b3261e;
+}
+
+.alert-banner-supervisor_call {
+  background: #b3760f;
+}

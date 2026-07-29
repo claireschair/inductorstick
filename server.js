@@ -79,15 +79,32 @@ onSnapshot(
 );
 
 let userCompanyMap = {};
+let userNameMap = {};
 let companyThresholds = {};
+
+const defaultUserNames = {
+  "1": "Belal Hasan",
+  "2": "Denisa Iljas",
+  "3": "Patrick Darmawi-Iskandar",
+  "4": "Maryann Whitney",
+  "5": "Fuad Veliev",
+};
 
 onSnapshot(
   collection(db, "users"),
   (snapshot) => {
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      if (data.id !== undefined && data.companyCode) {
-        userCompanyMap[String(data.id)] = data.companyCode;
+      const idVal = data.id !== undefined ? data.id : docSnap.id;
+      if (idVal !== undefined) {
+        const idStr = String(idVal);
+        if (data.companyCode) {
+          userCompanyMap[idStr] = data.companyCode;
+        }
+        const name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
+        if (name) {
+          userNameMap[idStr] = name;
+        }
       }
     });
   },
@@ -318,12 +335,15 @@ const server = http.createServer((req, res) => {
           }, { merge: true }).catch((err) => console.error("Error clearing DB announcement:", err.message));
         }
 
+        const employeeName = userNameMap[deviceId] || userNameMap[String(payload.id)] || defaultUserNames[deviceId] || defaultUserNames[String(payload.id)] || "";
+
         const responseDoc = {
           tempMaxThreshold,
           tempMinThreshold,
           humidityThreshold,
           checkInInterval,
           soundMaxThreshold,
+          employeeName,
           announcement: announcementToSend,
         };
 

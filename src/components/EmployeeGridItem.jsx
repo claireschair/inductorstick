@@ -8,7 +8,6 @@ function EmployeeGridItem({ employee, onClick }) {
   const { firstName, lastName, checkedIn, lastCheckIn, lastCheckOut, sensorData } = employee;
 
   const currentStatus = liveTelemetry?.status || employee.status || "active";
-  const isCheckingIn = liveTelemetry?.checkingIn || false;
 
   const tempVal = liveTelemetry?.sensorData?.temperature ?? sensorData?.temperature ?? "--";
   const humidityVal = liveTelemetry?.sensorData?.humidity ?? sensorData?.humidity ?? "--";

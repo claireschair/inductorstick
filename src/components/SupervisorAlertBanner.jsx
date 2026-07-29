@@ -6,7 +6,9 @@ function SupervisorAlertBanner() {
   const { userProfile } = useAuth();
   const { alerts, dismissAlert } = useTelemetry();
 
-  if (userProfile?.role !== "supervisor" || !alerts || alerts.length === 0) {
+  const activeAlerts = alerts?.filter(a => ["panic", "unresponsive", "supervisor_call"].includes(a.status)) || [];
+
+  if (userProfile?.role !== "supervisor" || activeAlerts.length === 0) {
     return null;
   }
 
@@ -25,18 +27,19 @@ function SupervisorAlertBanner() {
         </span>
       );
     }
-    if (alert.status === "superivsor_call") {
+    if (alert.status === "supervisor_call") {
       return (
         <span>
           <strong>{alert.workerName}</strong> needs supervisor assistance.
         </span>
       );
     }
+    return null;
   };
 
   return (
     <div className="alert-banner-stack">
-      {alerts.map((alert) => (
+      {activeAlerts.map((alert) => (
         <div
           key={alert.deviceId}
           className={`alert-banner alert-banner-${alert.status}`}

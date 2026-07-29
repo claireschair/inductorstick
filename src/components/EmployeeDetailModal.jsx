@@ -3,7 +3,7 @@ import { useTelemetry } from "../context/TelemetryContext";
 import "../styles/EmployeeDetailModal.css";
 
 const WS_HOST = window.location.hostname || "localhost";
-const WS_PORT = 6767;
+const WS_PORT = 8080;
 const RECONNECT_DELAY = 2000;
 const AUDIO_SAMPLE_RATE = 16000;
 
@@ -34,77 +34,36 @@ function EmployeeDetailModal({ employee, onClose }) {
     return dateObj.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
   };
 
-  const canvasRef = useRef(null);
-  const videoWsRef = useRef(null);
   const audioWsRef = useRef(null);
   const audioCtxRef = useRef(null);
   const nextPlayTimeRef = useRef(0);
-  const reconnectVideoRef = useRef(null);
   const reconnectAudioRef = useRef(null);
   const mountedRef = useRef(true);
 
   const [videoStatus, setVideoStatus] = useState("connecting");
   const [audioStatus, setAudioStatus] = useState("disconnected");
   const [muted, setMuted] = useState(false);
-  const [hasFrame, setHasFrame] = useState(false);
   const [esp32Ip, setEsp32Ip] = useState(null);
   const [mjpegUrl, setMjpegUrl] = useState(null);
 
+  // Fetch ESP32 IP from server, then point <img> directly at its MJPEG stream
   useEffect(() => {
     fetch(`http://${WS_HOST}:${WS_PORT}/api/esp32-info`)
       .then((res) => res.json())
       .then((data) => {
         if (data.ip) {
           setEsp32Ip(data.ip);
-          setMjpegUrl(`http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${data.ip}`);
+          // Point directly at the ESP32's own MJPEG HTTP server
+          setMjpegUrl(`http://${data.ip}/stream`);
         } else {
-          setMjpegUrl(`http://${WS_HOST}:${WS_PORT}/api/video-proxy`);
+          setVideoStatus("disconnected");
         }
       })
       .catch(() => {
-        setMjpegUrl(`http://${WS_HOST}:${WS_PORT}/api/video-proxy`);
+        setVideoStatus("disconnected");
       });
   }, []);
 
-  const connectVideo = useCallback(() => {
-    if (!mountedRef.current) return;
-
-    const ws = new WebSocket(`ws://${WS_HOST}:${WS_PORT}/ws/live-video`);
-    ws.binaryType = "arraybuffer";
-    videoWsRef.current = ws;
-
-    ws.onopen = () => {
-      if (mountedRef.current && !mjpegUrl) setVideoStatus("connected");
-    };
-
-    ws.onmessage = (event) => {
-      if (!mountedRef.current) return;
-      const blob = new Blob([event.data], { type: "image/jpeg" });
-      createImageBitmap(blob).then((bitmap) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        if (canvas.width !== bitmap.width || canvas.height !== bitmap.height) {
-          canvas.width = bitmap.width;
-          canvas.height = bitmap.height;
-        }
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(bitmap, 0, 0);
-        bitmap.close();
-        if (!hasFrame) setHasFrame(true);
-        setVideoStatus("connected");
-      }).catch(() => {});
-    };
-
-    ws.onclose = () => {
-      if (!mountedRef.current) return;
-      if (!mjpegUrl) setVideoStatus("disconnected");
-      reconnectVideoRef.current = setTimeout(connectVideo, RECONNECT_DELAY);
-    };
-
-    ws.onerror = () => {
-      ws.close();
-    };
-  }, [hasFrame, mjpegUrl]);
 
   const connectAudio = useCallback(() => {
     if (!mountedRef.current) return;
@@ -170,19 +129,13 @@ function EmployeeDetailModal({ employee, onClose }) {
 
   useEffect(() => {
     mountedRef.current = true;
-    connectVideo();
     connectAudio();
 
     return () => {
       mountedRef.current = false;
 
-      clearTimeout(reconnectVideoRef.current);
       clearTimeout(reconnectAudioRef.current);
 
-      if (videoWsRef.current) {
-        videoWsRef.current.onclose = null;
-        videoWsRef.current.close();
-      }
       if (audioWsRef.current) {
         audioWsRef.current.onclose = null;
         audioWsRef.current.close();
@@ -232,14 +185,11 @@ function EmployeeDetailModal({ employee, onClose }) {
                 src={mjpegUrl}
                 alt="ESP32 Live Stream"
                 className="video-feed-canvas"
-                onLoad={() => {
-                  setVideoStatus("connected");
-                  setHasFrame(true);
-                }}
+                onLoad={() => setVideoStatus("connected")}
                 onError={() => {
-                  if (esp32Ip && !mjpegUrl.includes(esp32Ip + "/stream")) {
-                    // Proxy failed — try connecting directly to ESP32's MJPEG stream
-                    setMjpegUrl(`http://${esp32Ip}/stream`);
+                  if (esp32Ip && !mjpegUrl.includes("video-proxy")) {
+                    // Direct ESP32 connection failed — try server proxy as fallback
+                    setMjpegUrl(`http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${esp32Ip}`);
                   } else {
                     setMjpegUrl(null);
                     setVideoStatus("disconnected");
@@ -247,11 +197,8 @@ function EmployeeDetailModal({ employee, onClose }) {
                 }}
               />
             ) : (
-              <canvas ref={canvasRef} className="video-feed-canvas" />
-            )}
-            {!hasFrame && !mjpegUrl && (
               <div className="video-feed-placeholder">
-                {videoStatus === "connected" ? "NO VIDEO YET" : videoStatus === "connecting" ? "Connecting..." : "No Signal"}
+                {videoStatus === "connecting" ? "Connecting..." : "No Signal"}
               </div>
             )}
           </div>

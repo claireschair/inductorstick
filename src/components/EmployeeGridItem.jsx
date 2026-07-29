@@ -55,11 +55,6 @@ function EmployeeGridItem({ employee, onClick }) {
         </h3>
         <div className="badge-row">
           <span className={`status-badge status-${currentStatus}`}>{currentStatus}</span>
-          {isCheckingIn && (
-            <span className="status-badge status-checking-in">
-              Ping
-            </span>
-          )}
         </div>
       </div>
 

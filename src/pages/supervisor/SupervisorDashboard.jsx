@@ -118,7 +118,7 @@ function SupervisorDashboard() {
       );
 
       try {
-        await fetch("http://localhost:6767/api/announcement", {
+        await fetch("http://localhost:8080/api/announcement", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ announcement: textToPush }),

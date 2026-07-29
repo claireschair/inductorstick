@@ -45,7 +45,7 @@
 
 .auth-form input {
   padding: 0.5rem 0.6rem;
-  border: 1.5px solid var(--color-secondary);
+  border: 1.25px solid var(--color-secondary);
   border-radius: 0;
   font-size: 0.92rem;
   font-weight: 400;
@@ -99,7 +99,7 @@
   border-radius: 0;
   font-size: 0.8rem;
   margin: 0;
-  border: 1.5px solid #f3c2bd;
+  border: 1.25px solid #f3c2bd;
 }
 
 .password-input-wrapper {
@@ -162,7 +162,7 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 0.5rem;
-  border: 1.5px solid var(--color-secondary);
+  border: 1.25px solid var(--color-secondary);
   border-radius: 0;
   font-size: 0.85rem;
   font-weight: 500;
@@ -186,7 +186,7 @@
   width: 15px;
   height: 15px;
   border-radius: 0;
-  border: 1.5px solid var(--color-secondary);
+  border: 1.25px solid var(--color-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;

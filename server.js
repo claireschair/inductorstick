@@ -1,4 +1,6 @@
 import http from "http";
+import { URL } from "url";
+import { WebSocketServer } from "ws";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "firebase/firestore";
 
@@ -16,6 +18,57 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const PORT = process.env.PORT || 8080;
+
+// ── WebSocket Servers (noServer mode — share the HTTP server) ──
+const wssEsp32Video = new WebSocketServer({ noServer: true });
+const wssEsp32Audio = new WebSocketServer({ noServer: true });
+const wssFrontendVideo = new WebSocketServer({ noServer: true });
+const wssFrontendAudio = new WebSocketServer({ noServer: true });
+
+// ESP32 video ingest → broadcast JPEG frames to all frontend video clients
+wssEsp32Video.on("connection", (ws) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source connected`);
+  ws.on("message", (data) => {
+    wssFrontendVideo.clients.forEach((client) => {
+      if (client.readyState === 1) {
+        client.send(data);
+      }
+    });
+  });
+  ws.on("close", () => {
+    console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source disconnected`);
+  });
+});
+
+// ESP32 audio ingest → broadcast PCM chunks to all frontend audio clients
+wssEsp32Audio.on("connection", (ws) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ESP32 audio source connected`);
+  ws.on("message", (data) => {
+    wssFrontendAudio.clients.forEach((client) => {
+      if (client.readyState === 1) {
+        client.send(data);
+      }
+    });
+  });
+  ws.on("close", () => {
+    console.log(`[${new Date().toLocaleTimeString()}] ESP32 audio source disconnected`);
+  });
+});
+
+// Frontend relay connections — just log connect/disconnect
+wssFrontendVideo.on("connection", (ws) => {
+  console.log(`[${new Date().toLocaleTimeString()}] Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
+  ws.on("close", () => {
+    console.log(`[${new Date().toLocaleTimeString()}] Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
+  });
+});
+
+wssFrontendAudio.on("connection", (ws) => {
+  console.log(`[${new Date().toLocaleTimeString()}] Frontend audio client connected (total: ${wssFrontendAudio.clients.size})`);
+  ws.on("close", () => {
+    console.log(`[${new Date().toLocaleTimeString()}] Frontend audio client disconnected (total: ${wssFrontendAudio.clients.size})`);
+  });
+});
 
 let currentAnnouncement = "";
 
@@ -78,6 +131,8 @@ onSnapshot(
   }
 );
 
+let lastEsp32Ip = null;
+
 const server = http.createServer((req, res) => {
   console.log(`[${new Date().toLocaleTimeString()}] HTTP ${req.method} ${req.url} from ${req.socket.remoteAddress}`);
 
@@ -88,6 +143,41 @@ const server = http.createServer((req, res) => {
   if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
+    return;
+  }
+
+  // ── ESP32 Device Info endpoint ──
+  if (req.method === "GET" && req.url.startsWith("/api/esp32-info")) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        ip: lastEsp32Ip,
+        streamUrl: lastEsp32Ip ? `http://${lastEsp32Ip}/stream` : null,
+      })
+    );
+    return;
+  }
+
+  // ── ESP32 HTTP Video Proxy ──
+  if (req.method === "GET" && req.url.startsWith("/api/video-proxy")) {
+    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+    const espIp = parsedUrl.searchParams.get("ip") || lastEsp32Ip;
+    if (!espIp) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "No ESP32 IP address available" }));
+      return;
+    }
+    const targetUrl = `http://${espIp}/stream`;
+    http
+      .get(targetUrl, (proxyRes) => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res);
+      })
+      .on("error", (err) => {
+        console.error("Video proxy error:", err.message);
+        res.writeHead(502, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Failed to connect to ESP32 stream", details: err.message }));
+      });
     return;
   }
 
@@ -133,6 +223,15 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === "POST" && req.url.startsWith("/api/data")) {
+    // Record client IP address for ESP32 stream auto-discovery
+    let rawIp = req.socket.remoteAddress || "";
+    if (rawIp.startsWith("::ffff:")) {
+      rawIp = rawIp.substring(7);
+    }
+    if (rawIp && rawIp !== "127.0.0.1" && rawIp !== "::1") {
+      lastEsp32Ip = rawIp;
+    }
+
     let body = "";
     req.on("data", (chunk) => {
       body += chunk.toString();
@@ -275,7 +374,7 @@ const server = http.createServer((req, res) => {
 
   if (req.method === "GET") {
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "InductorStick Telemetry Server Active", port: PORT, currentAnnouncement }));
+    res.end(JSON.stringify({ status: "InductorStick Telemetry Server Active", port: PORT, currentAnnouncement, lastEsp32Ip }));
     return;
   }
 
@@ -286,4 +385,35 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   console.log(`Telemetry server listening on ALL interfaces (0.0.0.0:${PORT})`);
   console.log(`Arduino should POST to: http://192.168.1.176:${PORT}/api/data`);
+  console.log(`WebSocket endpoints:`);
+  console.log(`  ESP32 video ingest:   ws://0.0.0.0:${PORT}/api/video-stream`);
+  console.log(`  ESP32 audio ingest:   ws://0.0.0.0:${PORT}/api/audio-stream (or /api/poopybutt-audio)`);
+  console.log(`  Frontend video relay: ws://0.0.0.0:${PORT}/ws/live-video`);
+  console.log(`  Frontend audio relay: ws://0.0.0.0:${PORT}/ws/live-audio`);
+  console.log(`  ESP32 HTTP Video MJPEG Stream: http://<ESP32_IP>/stream or http://0.0.0.0:${PORT}/api/video-proxy`);
+});
+
+// ── Route WebSocket upgrade requests to the correct WSS instance ──
+server.on("upgrade", (req, socket, head) => {
+  const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
+
+  if (pathname === "/api/video-stream") {
+    wssEsp32Video.handleUpgrade(req, socket, head, (ws) => {
+      wssEsp32Video.emit("connection", ws, req);
+    });
+  } else if (pathname === "/api/audio-stream" || pathname === "/api/poopybutt-audio") {
+    wssEsp32Audio.handleUpgrade(req, socket, head, (ws) => {
+      wssEsp32Audio.emit("connection", ws, req);
+    });
+  } else if (pathname === "/ws/live-video") {
+    wssFrontendVideo.handleUpgrade(req, socket, head, (ws) => {
+      wssFrontendVideo.emit("connection", ws, req);
+    });
+  } else if (pathname === "/ws/live-audio") {
+    wssFrontendAudio.handleUpgrade(req, socket, head, (ws) => {
+      wssFrontendAudio.emit("connection", ws, req);
+    });
+  } else {
+    socket.destroy();
+  }
 });

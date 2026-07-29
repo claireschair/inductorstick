@@ -25,11 +25,13 @@ function SupervisorAlertBanner() {
         </span>
       );
     }
-    if (alert.status == "supervisor_call") (
-      <span>
-        <strong>{alert.workerName}</strong> needs supervisor assistance.
-      </span>
-    );
+    if (alert.status === "superivsor_call") {
+      return (
+        <span>
+          <strong>{alert.workerName}</strong> needs supervisor assistance.
+        </span>
+      );
+    }
   };
 
   return (

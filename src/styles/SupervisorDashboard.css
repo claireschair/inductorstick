@@ -17,7 +17,6 @@
   gap: 1rem;
 }
 
-/* Announcement Section */
 .announcement-section {
   background: #ffffff;
   border: 1.5px solid var(--color-secondary);
@@ -69,4 +68,4 @@
   font-size: 0.85rem;
   color: #1f7a4d;
   font-weight: 600;
-}
+}

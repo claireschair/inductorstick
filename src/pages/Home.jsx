@@ -10,7 +10,7 @@ function Home() {
       <section className="hero-section">
         <h1 className="hero-title">InductorStick</h1>
         <p className="hero-subtitle">
-          Brought to you by the amazing, glorious, cool Inductors.
+          Ainsley, Andy, Atharv, Claire, and Nikhil
         </p>
 
         <div className="hero-actions">
@@ -30,23 +30,6 @@ function Home() {
               </Link>
             </>
           )}
-        </div>
-
-        <div className="simple-cards">
-          <div className="simple-card">
-            <h3>Live Sensor Data</h3>
-            <p>Our sensors all come from a 60 dollar kit, but that don't mean we can't get workers some safety.</p>
-          </div>
-
-          <div className="simple-card">
-            <h3>Body Cam</h3>
-            <p>Andy will manually take pictures and upload them until he finishes coding by 6pm EST SHARP.</p>
-          </div>
-
-          <div className="simple-card">
-            <h3>Safety Alerts</h3>
-            <p>We will alert you most of the time, but marking them as dead is sometimes more convenient.</p>
-          </div>
         </div>
       </section>
     </div>

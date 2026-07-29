@@ -1,12 +1,16 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Merriweather:ital,opsz,wght@0,18..144,300..900;1,18..144,300..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Lora:wght@400;500;600;700&display=swap');
+
 :root {
-  --font-body: 'Merriweather', serif;
-  --font-mono: 'Merriweather', monospace;
-  --color-bg: #f2ece1;
-  --color-text: #3d3229;
-  --color-primary: #b3552f;
-  --color-secondary: #a89984;
-  --color-accent: #5f8f8a;
+  --font-body: 'Lora', serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --color-bg: #e8eef5;
+  --color-text: #1f2937;
+  --color-primary: #4873a0;
+  --color-secondary: #51657f;
+  --color-accent: #3da96f;
+
+  --color-success: #3d8b5f;
+  --color-danger: #c05656;
 }
 
 *, *::before, *::after {

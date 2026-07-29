@@ -23,7 +23,7 @@
 }
 
 .employee-card-inactive {
-  background: #f3f4f6;
+  background: #fcfdff;
   border-color: #d1d5db;
   color: #6b7280;
   opacity: 0.65;
@@ -74,8 +74,8 @@
 }
 
 .status-inactive {
-  background: #e5e7eb;
-  color: #4b5563;
+  background: #eceef3;
+  color: #424b57;
 }
 
 .badge-row {
@@ -94,8 +94,8 @@
 }
 
 .status-live {
-  background: #fef3c7;
-  color: #92400e;
+  background: #c7e1fe;
+  color: #0e4392;
 }
 
 

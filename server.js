@@ -146,7 +146,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── ESP32 Device Info endpoint ──
   if (req.method === "GET" && req.url.startsWith("/api/esp32-info")) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
@@ -158,7 +157,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // ── ESP32 HTTP Video Proxy ──
   if (req.method === "GET" && req.url.startsWith("/api/video-proxy")) {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     const espIp = parsedUrl.searchParams.get("ip") || lastEsp32Ip;

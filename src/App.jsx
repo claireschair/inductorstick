@@ -11,6 +11,7 @@ import Larp from "./pages/Larp";
 import { useAuth } from "./context/AuthContext";
 import SupervisorAlertBanner from "./components/SupervisorAlertBanner";
 import "./styles/App.css";
+import AudioClassifier from "./components/AudioClassifier";
 
 function DashboardRoute() {
   const { userProfile } = useAuth();
@@ -26,7 +27,14 @@ function App() {
   const location = useLocation();
 
   return (
-    <>
+    <div className="app-container">
+      {location.pathname !== "/larp" && <Navbar />}
+      <SupervisorAlertBanner />
+      
+      <h1>My React Dashboard</h1>
+      <AudioClassifier /> 
+
+      <Routes>
       {location.pathname !== "/larp" && <Navbar />}
       <SupervisorAlertBanner />
       <Routes>

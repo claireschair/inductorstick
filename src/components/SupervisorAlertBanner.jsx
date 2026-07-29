@@ -25,14 +25,7 @@ function SupervisorAlertBanner() {
         </span>
       );
     }
-    if (alert.status === "checkin") {
-      return (
-        <span>
-          <strong>{alert.workerName}</strong> has a pending check-in.
-        </span>
-      );
-    }
-    return (
+    if (alert.status == "supervisor_call") (
       <span>
         <strong>{alert.workerName}</strong> needs supervisor assistance.
       </span>

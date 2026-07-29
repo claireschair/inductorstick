@@ -23,7 +23,6 @@ with open(LABELS_PATH, 'r') as f:
     labels = [line.strip() for line in f.readlines()]
 print(f"server ready. tracking: {labels}")
 
-# Fixed endpoint to match frontend and added OPTIONS method to handle preflight handshake
 @app.route('/predict', methods=['POST', 'OPTIONS'])
 def classify_audio():
     if request.method == 'OPTIONS':

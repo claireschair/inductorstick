@@ -15,6 +15,7 @@ function SupervisorDashboard() {
   const [announcementInput, setAnnouncementInput] = useState("");
   const [publishing, setPublishing] = useState(false);
   const [announcementMessage, setAnnouncementMessage] = useState("");
+  const [_activeAnnouncement, setActiveAnnouncement] = useState(null);
 
   const { userProfile } = useAuth();
 

@@ -40,3 +40,11 @@
 .alert-banner-supervisor_call {
   background: #b3760f;
 }
+
+.alert-banner-unresponsive {
+  background: #c62828;
+}
+
+.alert-banner-checkin {
+  background: #0277bd;
+}

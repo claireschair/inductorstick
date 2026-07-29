@@ -9,6 +9,7 @@ import Settings from "./pages/settings/Settings";
 import Profile from "./pages/Profile";
 import Larp from "./pages/Larp";
 import { useAuth } from "./context/AuthContext";
+import SupervisorAlertBanner from "./components/SupervisorAlertBanner";
 import "./styles/App.css";
 
 function DashboardRoute() {
@@ -27,6 +28,7 @@ function App() {
   return (
     <>
       {location.pathname !== "/larp" && <Navbar />}
+      <SupervisorAlertBanner />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<DashboardRoute />} />

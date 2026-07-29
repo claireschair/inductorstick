@@ -147,7 +147,6 @@ const server = http.createServer((req, res) => {
 
         const telemetryData = {
           id: payload.id ?? 1,
-          zone: payload.zone || "Zone A",
           status: payload.status || "active",
           checkingIn: Boolean(payload.checkingIn),
           timeSinceLastCheckIn: Number(payload.timeSinceLastCheckIn || 0),
@@ -165,22 +164,10 @@ const server = http.createServer((req, res) => {
             y: payload.accelData?.y ?? null,
             z: payload.accelData?.z ?? null,
           },
-          position: {
-            x: payload.position?.x ?? null,
-            y: payload.position?.y ?? null,
-          },
           updatedAt: new Date().toISOString(),
         };
 
         await setDoc(doc(db, "telemetry", deviceId), telemetryData, { merge: true });
-
-        if (payload.status === "panic" || payload.status === "supervisor_call") {
-          await setDoc(doc(db, "alerts", deviceId), {
-            deviceId: payload.id ?? 1,
-            status: payload.status,
-            createdAt: new Date().toISOString(),
-          });
-        }
 
         let tempMaxThreshold = 85;
         let tempMinThreshold = 50;
@@ -217,6 +204,28 @@ const server = http.createServer((req, res) => {
               if (cData.checkInInterval !== undefined) checkInInterval = Number(cData.checkInInterval);
             }
           } catch (compErr) {}
+        }
+
+        const timeSinceLastCheckInSec = Number(payload.timeSinceLastCheckIn || 0);
+        const checkInIntervalSec = checkInInterval * 60;
+
+        let alertStatus = null;
+        if (payload.status === "panic") {
+          alertStatus = "panic";
+        } else if (payload.status === "supervisor_call") {
+          alertStatus = "supervisor_call";
+        } else if (payload.status === "unresponsive") {
+          alertStatus = "unresponsive";
+        } else if (payload.status === "checkin" || payload.checkingIn || (checkInIntervalSec > 0 && timeSinceLastCheckInSec >= checkInIntervalSec)) {
+          alertStatus = "checkin";
+        }
+
+        if (alertStatus) {
+          await setDoc(doc(db, "alerts", deviceId), {
+            deviceId: payload.id ?? 1,
+            status: alertStatus,
+            createdAt: new Date().toISOString(),
+          });
         }
 
         const announcementToSend = (typeof currentAnnouncement === "string" && currentAnnouncement.trim().length > 0)

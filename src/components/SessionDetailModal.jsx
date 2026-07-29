@@ -2,8 +2,8 @@ import "../styles/EmployeeDetailModal.css";
 import "../styles/SessionDetailModal.css";
 
 function SessionDetailModal({ session, onClose }) {
-  const { zone, date, checkIn, checkOut, duration, status, sensorSummary, minuteData, title } = session;
-  const sessionTitle = title || (date ? `${date} Session` : zone || "Session");
+  const { date, checkIn, checkOut, duration, status, sensorSummary, minuteData, title } = session;
+  const sessionTitle = title || (date ? `${date} Session` : "Session");
 
   return (
     <div className="modal-backdrop" onClick={onClose}>

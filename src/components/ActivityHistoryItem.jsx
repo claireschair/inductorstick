@@ -1,8 +1,8 @@
 import "../styles/ActivityHistoryItem.css";
 
 function ActivityHistoryItem({ session, onClick }) {
-  const { zone, date, checkIn, checkOut, duration, status, sensorSummary, title } = session;
-  const sessionTitle = title || (date ? `${date} Session` : zone || "Session");
+  const { date, checkIn, checkOut, duration, status, sensorSummary, title } = session;
+  const sessionTitle = title || (date ? `${date} Session` : "Session");
 
   return (
     <button className="activity-item activity-item-clickable" onClick={onClick}>

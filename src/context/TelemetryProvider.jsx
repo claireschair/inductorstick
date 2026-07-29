@@ -60,7 +60,6 @@ export function TelemetryProvider({ children }) {
           sessionMap[String(data.userId)] = {
             sessionId: docSnap.id,
             workerName: data.workerName,
-            zone: data.zone,
           };
         });
         setActiveSessionsByUserId(sessionMap);
@@ -154,19 +153,38 @@ export function TelemetryProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "alerts"),
-      (snapshot) => {
-        const alertList = snapshot.docs.map((docSnap) => {
+      async (snapshot) => {
+        const promises = snapshot.docs.map(async (docSnap) => {
           const data = docSnap.data();
           const deviceId = String(docSnap.id);
           const session = activeSessionsRef.current[deviceId];
+          let workerName = session?.workerName;
+
+          if (!workerName) {
+            try {
+              const usersRef = collection(db, "users");
+              const q = query(usersRef, where("id", "==", Number(deviceId)));
+              const qSnap = await getDocs(q);
+              if (!qSnap.empty) {
+                const uData = qSnap.docs[0].data();
+                if (!workerName && uData.firstName) {
+                  workerName = `${uData.firstName} ${uData.lastName || ""}`.trim();
+                }
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }
+
           return {
             deviceId,
             status: data.status,
             createdAt: data.createdAt,
-            workerName: session?.workerName || `Worker #${deviceId}`,
-            zone: session?.zone || "Unknown Zone",
+            workerName: workerName || `Worker #${deviceId}`,
           };
         });
+
+        const alertList = await Promise.all(promises);
         setAlerts(alertList);
       },
       (err) => {

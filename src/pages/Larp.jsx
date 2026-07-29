@@ -72,7 +72,6 @@ function Larp() {
         userUid: userUid,
         workerName: `${userData.firstName} ${userData.lastName}`,
         companyCode: userData.companyCode || "",
-        zone: userData.zone || "Hazardous Work Zone",
         checkInTime: now.toISOString(),
         checkOutTime: null,
         status: "active",

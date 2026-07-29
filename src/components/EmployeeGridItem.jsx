@@ -5,7 +5,7 @@ function EmployeeGridItem({ employee, onClick }) {
   const { getDeviceTelemetry } = useTelemetry();
   const liveTelemetry = getDeviceTelemetry(employee.id);
 
-  const { firstName, lastName, checkedIn, zone, lastCheckIn, lastCheckOut, sensorData } = employee;
+  const { firstName, lastName, checkedIn, lastCheckIn, lastCheckOut, sensorData } = employee;
 
   const currentStatus = liveTelemetry?.status || employee.status || "active";
   const isCheckingIn = liveTelemetry?.checkingIn || false;
@@ -63,7 +63,6 @@ function EmployeeGridItem({ employee, onClick }) {
         </div>
       </div>
 
-      <p className="employee-zone">{zone}</p>
       <p className="employee-checkin">
         Last received: {formatLastReceived(liveTelemetry?.updatedAt)}
       </p>

@@ -5,11 +5,9 @@ function EmployeeDetailModal({ employee, onClose }) {
   const { getDeviceTelemetry } = useTelemetry();
   const liveTelemetry = getDeviceTelemetry(employee.id);
 
-  const { firstName, lastName, zone, position } = employee;
+  const { firstName, lastName } = employee;
 
   const currentStatus = liveTelemetry?.status || employee.status || "active";
-  const isCheckingIn = liveTelemetry?.checkingIn || false;
-  const timeSinceCheckIn = liveTelemetry?.timeSinceLastCheckIn ?? null;
 
   const tempVal = liveTelemetry?.sensorData?.temperature ?? employee.sensorData?.temperature ?? "--";
   const humidityVal = liveTelemetry?.sensorData?.humidity ?? employee.sensorData?.humidity ?? "--";
@@ -23,12 +21,11 @@ function EmployeeDetailModal({ employee, onClose }) {
     return typeof val === "number" ? val.toFixed(2) : val;
   };
 
-  const formatSeconds = (sec) => {
-    if (sec === null || sec === undefined) return employee.lastCheckIn || "N/A";
-    if (sec < 60) return `${sec}s ago`;
-    const mins = Math.floor(sec / 60);
-    const remainingSec = sec % 60;
-    return `${mins}m ${remainingSec}s ago`;
+  const formatLastReceived = (updatedAt) => {
+    if (!updatedAt) return employee.lastCheckIn || "N/A";
+    const dateObj = typeof updatedAt?.toDate === "function" ? updatedAt.toDate() : new Date(updatedAt);
+    if (isNaN(dateObj.getTime())) return updatedAt || employee.lastCheckIn || "N/A";
+    return dateObj.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
   };
 
   return (
@@ -37,23 +34,10 @@ function EmployeeDetailModal({ employee, onClose }) {
         <div className="modal-header">
           <div>
             <h2>
-              {firstName} {lastName}
-            </h2>
-            <div className="badge-row">
-              <span className={`status-badge status-${currentStatus}`}>
+              {firstName} {lastName} <span className={`status-badge status-${currentStatus}`}>
                 {currentStatus}
               </span>
-              {isCheckingIn && (
-                <span className="status-badge status-checking-in">
-                  Checking In
-                </span>
-              )}
-              {liveTelemetry && (
-                <span className="status-badge status-live">
-                  Live Tag #{employee.id}
-                </span>
-              )}
-            </div>
+            </h2>
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Close">
             ✕
@@ -61,28 +45,17 @@ function EmployeeDetailModal({ employee, onClose }) {
         </div>
 
         <div className="modal-section">
-          <h3>Location</h3>
-          <div className="facility-map">
-            <div
-              className="facility-marker"
-              style={{
-                left: `${liveTelemetry?.position?.x ?? position?.x ?? 50}%`,
-                top: `${liveTelemetry?.position?.y ?? position?.y ?? 50}%`,
-              }}
-            />
-          </div>
-          <p className="modal-zone">{zone || "Zone A"}</p>
+          <h3>Video Feed</h3>
         </div>
 
         <div className="modal-section">
-          <h3>Check-In & Hardware Status</h3>
           <p className="modal-detail-line">
-            Time since last check-in: {formatSeconds(timeSinceCheckIn)}
+            Last data received: {formatLastReceived(liveTelemetry?.updatedAt)}
           </p>
         </div>
 
         <div className="modal-section">
-          <h3>Sensor Readings</h3>
+          <h3>Sensor Data</h3>
           <div className="modal-sensor-grid">
             <div className="sensor-stat">
               <span className="sensor-label">Temp</span>
@@ -100,7 +73,7 @@ function EmployeeDetailModal({ employee, onClose }) {
         </div>
 
         <div className="modal-section">
-          <h3>Gyroscope (IMU)</h3>
+          <h3>Gyroscope</h3>
           <div className="modal-sensor-grid">
             <div className="sensor-stat">
               <span className="sensor-label">X Axis</span>
@@ -118,7 +91,7 @@ function EmployeeDetailModal({ employee, onClose }) {
         </div>
 
         <div className="modal-section">
-          <h3>Accelerometer (IMU)</h3>
+          <h3>Accelerometer</h3>
           <div className="modal-sensor-grid">
             <div className="sensor-stat">
               <span className="sensor-label">X Axis</span>

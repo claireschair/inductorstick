@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, doc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
 import EmployeeGridItem from "../../components/EmployeeGridItem";
@@ -11,7 +11,30 @@ function SupervisorDashboard() {
   const [employees, setEmployees] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const [announcementInput, setAnnouncementInput] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [announcementMessage, setAnnouncementMessage] = useState("");
+
   const { userProfile } = useAuth();
+
+  useEffect(() => {
+    const unsubAnnouncement = onSnapshot(
+      doc(db, "announcements", "current"),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          setActiveAnnouncement(docSnap.data());
+        } else {
+          setActiveAnnouncement(null);
+        }
+      },
+      (err) => {
+        console.error("Error fetching announcement:", err);
+      }
+    );
+
+    return () => unsubAnnouncement();
+  }, []);
 
   useEffect(() => {
     if (!userProfile?.companyCode) {
@@ -69,6 +92,50 @@ function SupervisorDashboard() {
     };
   }, [userProfile]);
 
+  const handlePushAnnouncement = async (e) => {
+    e.preventDefault();
+    const textToPush = announcementInput.trim();
+    if (!textToPush) return;
+
+    setPublishing(true);
+    setAnnouncementMessage("");
+
+    try {
+      const creatorName = userProfile?.firstName
+        ? `${userProfile.firstName} ${userProfile.lastName || ""}`.trim()
+        : "Supervisor";
+
+      await setDoc(
+        doc(db, "announcements", "current"),
+        {
+          text: textToPush,
+          active: true,
+          updatedAt: new Date().toISOString(),
+          createdBy: creatorName,
+        },
+        { merge: true }
+      );
+
+      try {
+        await fetch("http://localhost:8080/api/announcement", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ announcement: textToPush }),
+        });
+      } catch (e) {
+        console.warn("Failed to broadcast to local endpoint:", e);
+      }
+
+      setAnnouncementInput("");
+      setAnnouncementMessage("Successfully announced.");
+      setTimeout(() => setAnnouncementMessage(""), 3500);
+    } catch (err) {
+      console.error("Failed to push announcement:", err);
+      setAnnouncementMessage("Failed to push announcement.");
+    }
+    setPublishing(false);
+  };
+
   const employeesWithSessionData = employees.map((employee) => {
     const workerSessions = sessions.filter(
       (s) =>
@@ -121,8 +188,32 @@ function SupervisorDashboard() {
   const activeEmployees = employeesWithSessionData.filter((employee) => employee.checkedIn);
   const inactiveEmployees = employeesWithSessionData.filter((employee) => !employee.checkedIn);
 
+
   return (
     <div className="supervisor-page">
+      <div className="announcement-section settings-card">
+        <h2>Global Announcement</h2>
+        <form onSubmit={handlePushAnnouncement} className="announcement-form">
+          <div className="announcement-input-group">
+            <input
+              type="text"
+              className="announcement-input"
+              placeholder="Stay brief and concise..."
+              value={announcementInput}
+              onChange={(e) => setAnnouncementInput(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={publishing || !announcementInput.trim()}
+            >
+              {publishing ? "Announcing..." : "Announce"}
+            </button>
+          </div>
+          {announcementMessage && <p className="announcement-feedback">{announcementMessage}</p>}
+        </form>
+      </div>
+
       <h1>Team Overview</h1>
 
       {loading ? (

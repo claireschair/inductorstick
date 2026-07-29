@@ -1,3 +1,4 @@
+/** 
 const mockActivityHistory = [
   {
     id: "1",
@@ -58,3 +59,5 @@ const mockActivityHistory = [
 ];
 
 export default mockActivityHistory;
+
+*/

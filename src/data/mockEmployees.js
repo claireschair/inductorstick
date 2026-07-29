@@ -1,3 +1,4 @@
+/**
 const mockEmployees = [
   {
     id: "1",
@@ -66,3 +67,5 @@ const mockEmployees = [
 ];
 
 export default mockEmployees;
+
+*/

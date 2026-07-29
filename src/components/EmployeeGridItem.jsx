@@ -14,6 +14,13 @@ function EmployeeGridItem({ employee, onClick }) {
   const humidityVal = liveTelemetry?.sensorData?.humidity ?? sensorData?.humidity ?? "--";
   const soundVal = sensorData?.sound ?? "--";
 
+  const formatLastReceived = (updatedAt) => {
+    if (!updatedAt) return lastCheckIn || "N/A";
+    const dateObj = typeof updatedAt?.toDate === "function" ? updatedAt.toDate() : new Date(updatedAt);
+    if (isNaN(dateObj.getTime())) return updatedAt || lastCheckIn || "N/A";
+    return dateObj.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  };
+
   if (!checkedIn) {
     let displayCheckOut = lastCheckOut;
     if (!displayCheckOut && employee.lastCheckOutTime) {
@@ -58,9 +65,7 @@ function EmployeeGridItem({ employee, onClick }) {
 
       <p className="employee-zone">{zone}</p>
       <p className="employee-checkin">
-        {liveTelemetry?.timeSinceLastCheckIn !== undefined
-          ? `Last active: ${liveTelemetry.timeSinceLastCheckIn}s ago`
-          : `Last check-in: ${lastCheckIn}`}
+        Last received: {formatLastReceived(liveTelemetry?.updatedAt)}
       </p>
 
       <div className="sensor-readings">

@@ -21,7 +21,7 @@
 
 .settings-card {
   background: #fff;
-  border: 1.5px solid var(--color-secondary);
+  border: 1.25px solid var(--color-secondary);
   border-radius: 0;
   padding: 1.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -62,7 +62,7 @@
   align-items: center;
   gap: 0.4rem;
   background: #fff;
-  border: 1.5px solid var(--color-secondary);
+  border: 1.25px solid var(--color-secondary);
   color: var(--color-text);
   padding: 0.45rem 0.8rem;
   border-radius: 0;
@@ -82,7 +82,7 @@
   align-items: center;
   gap: 0.4rem;
   background: #d64747;
-  border: 1.5px solid #d64747;
+  border: 1.25px solid #d64747;
   color: #ffffff;
   padding: 0.45rem 0.85rem;
   border-radius: 0;
@@ -209,7 +209,7 @@
 
 .threshold-field input {
   padding: 0.5rem 0.6rem;
-  border: 1.5px solid var(--color-secondary);
+  border: 1.25px solid var(--color-secondary);
   border-radius: 0;
   font-size: 0.9rem;
   width: 100%;

@@ -3,7 +3,7 @@ import { useTelemetry } from "../context/TelemetryContext";
 import "../styles/EmployeeDetailModal.css";
 
 const WS_HOST = window.location.hostname || "localhost";
-const WS_PORT = 8080;
+const WS_PORT = 6767;
 const RECONNECT_DELAY = 2000;
 const AUDIO_SAMPLE_RATE = 16000;
 
@@ -237,7 +237,8 @@ function EmployeeDetailModal({ employee, onClose }) {
                   setHasFrame(true);
                 }}
                 onError={() => {
-                  if (esp32Ip && !mjpegUrl.includes("http://")) {
+                  if (esp32Ip && !mjpegUrl.includes(esp32Ip + "/stream")) {
+                    // Proxy failed — try connecting directly to ESP32's MJPEG stream
                     setMjpegUrl(`http://${esp32Ip}/stream`);
                   } else {
                     setMjpegUrl(null);

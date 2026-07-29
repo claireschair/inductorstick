@@ -17,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 6767;
 
 // ── WebSocket Servers (noServer mode — share the HTTP server) ──
 const wssEsp32Video = new WebSocketServer({ noServer: true });
@@ -25,9 +25,21 @@ const wssEsp32Audio = new WebSocketServer({ noServer: true });
 const wssFrontendVideo = new WebSocketServer({ noServer: true });
 const wssFrontendAudio = new WebSocketServer({ noServer: true });
 
+// Helper: extract remote IP from a WebSocket upgrade request
+function extractRemoteIp(ws, req) {
+  if (!req) return;
+  let rawIp = req.socket?.remoteAddress || "";
+  if (rawIp.startsWith("::ffff:")) rawIp = rawIp.substring(7);
+  if (rawIp && rawIp !== "127.0.0.1" && rawIp !== "::1") {
+    lastEsp32Ip = rawIp;
+    console.log(`[${new Date().toLocaleTimeString()}] Auto-discovered ESP32 IP from WebSocket: ${rawIp}`);
+  }
+}
+
 // ESP32 video ingest → broadcast JPEG frames to all frontend video clients
-wssEsp32Video.on("connection", (ws) => {
+wssEsp32Video.on("connection", (ws, req) => {
   console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source connected`);
+  extractRemoteIp(ws, req);
   ws.on("message", (data) => {
     wssFrontendVideo.clients.forEach((client) => {
       if (client.readyState === 1) {
@@ -41,8 +53,9 @@ wssEsp32Video.on("connection", (ws) => {
 });
 
 // ESP32 audio ingest → broadcast PCM chunks to all frontend audio clients
-wssEsp32Audio.on("connection", (ws) => {
+wssEsp32Audio.on("connection", (ws, req) => {
   console.log(`[${new Date().toLocaleTimeString()}] ESP32 audio source connected`);
+  extractRemoteIp(ws, req);
   ws.on("message", (data) => {
     wssFrontendAudio.clients.forEach((client) => {
       if (client.readyState === 1) {

@@ -23,10 +23,10 @@ function Home() {
           ) : (
             <>
               <Link to="/signup" className="btn btn-primary">
-                Get Started
+                Sign Up
               </Link>
               <Link to="/login" className="btn btn-secondary">
-                Sign In
+                Log In
               </Link>
             </>
           )}

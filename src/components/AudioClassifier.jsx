@@ -14,7 +14,7 @@ export default function AudioClassifier() {
   const startListening = () => {
     setError(null);
 
-    // TODO: Update to ESP32 local IP
+    //update to esp32 ip
     wsRef.current = new WebSocket("ws://192.168.1.100:81");
     wsRef.current.binaryType = "arraybuffer";
 
@@ -33,12 +33,10 @@ export default function AudioClassifier() {
       nextBuffer.set(incomingPCM, currentBuffer.length);
       audioBufferRef.current = nextBuffer;
 
-      // Process window when full
       if (audioBufferRef.current.length >= WINDOW_SIZE) {
         const inferenceWindow = audioBufferRef.current.subarray(0, WINDOW_SIZE);
         runInference(inferenceWindow);
 
-        // 50% stride overlay
         audioBufferRef.current = audioBufferRef.current.subarray(WINDOW_SIZE / 2);
       }
     };

@@ -86,7 +86,7 @@ function WorkerSettings() {
           <strong>Company Name:</strong> {companyName}
         </p>
         <p className="modal-detail-line">
-          <strong>Supervisor Name:</strong>{" "}
+          <strong>Supervisor Names:</strong>{" "}
           {loadingSupervisors ? "Loading..." : supervisorNames}
         </p>
         <p className="modal-detail-line">

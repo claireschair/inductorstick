@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTelemetry } from "../context/TelemetryContext";
 import "../styles/EmployeeDetailModal.css";
-
+import RGB565VideoPlayer from "./RGB565VideoPlayer";
 const WS_HOST = window.location.hostname || "localhost";
 const WS_PORT = 8080;
 const RECONNECT_DELAY = 2000;
@@ -44,17 +44,14 @@ function EmployeeDetailModal({ employee, onClose }) {
   const [audioStatus, setAudioStatus] = useState("disconnected");
   const [muted, setMuted] = useState(false);
   const [esp32Ip, setEsp32Ip] = useState(null);
-  const [mjpegUrl, setMjpegUrl] = useState(null);
 
-  // Fetch ESP32 IP from server, then point <img> directly at its MJPEG stream
+  // Fetch ESP32 IP from server, then point video player directly at its stream
   useEffect(() => {
     fetch(`http://${WS_HOST}:${WS_PORT}/api/esp32-info`)
       .then((res) => res.json())
       .then((data) => {
         if (data.ip) {
           setEsp32Ip(data.ip);
-          // Point directly at the ESP32's own MJPEG HTTP server
-          setMjpegUrl(`http://${data.ip}/stream`);
         } else {
           setVideoStatus("disconnected");
         }
@@ -180,22 +177,26 @@ function EmployeeDetailModal({ employee, onClose }) {
         <div className="modal-section">
           <h3>Video Feed</h3>
           <div className="video-feed-container">
-            {mjpegUrl ? (
-              <img
-                src={mjpegUrl}
-                alt="ESP32 Live Stream"
-                className="video-feed-canvas"
-                onLoad={() => setVideoStatus("connected")}
-                onError={() => {
-                  if (esp32Ip && !mjpegUrl.includes("video-proxy")) {
-                    // Direct ESP32 connection failed — try server proxy as fallback
-                    setMjpegUrl(`http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${esp32Ip}`);
-                  } else {
-                    setMjpegUrl(null);
-                    setVideoStatus("disconnected");
-                  }
-                }}
-              />
+            {esp32Ip ? (
+              <>
+                <RGB565VideoPlayer
+                  primaryUrl={`http://${esp32Ip}/stream`}
+                  fallbackUrl={`http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${esp32Ip}`}
+                  className="video-feed-canvas"
+                  onConnected={() => setVideoStatus("connected")}
+                  onDisconnected={() => setVideoStatus("disconnected")}
+                />
+                {videoStatus === "connecting" && (
+                  <div className="video-feed-placeholder" style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                    Connecting...
+                  </div>
+                )}
+                {videoStatus === "disconnected" && (
+                  <div className="video-feed-placeholder" style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'}}>
+                    No Signal
+                  </div>
+                )}
+              </>
             ) : (
               <div className="video-feed-placeholder">
                 {videoStatus === "connecting" ? "Connecting..." : "No Signal"}

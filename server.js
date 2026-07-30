@@ -44,17 +44,13 @@ function extractRemoteIp(ws, req) {
 
 // --- Audio WebSocket Relay (Mic Port 8081 -> Frontend Port 8080) ---
 wssEsp32Audio.on("connection", (ws, req) => {
-  console.log(`[${new Date().toLocaleTimeString()}] 🎙️ Audio source connected on port ${PORT_ESP32_AUDIO}`);
-  extractRemoteIp(ws, req);
   ws.on("message", (data) => {
     wssFrontendAudio.clients.forEach((client) => {
-      if (client.readyState === 1) {
+      // Only send if the client socket buffer isn't backlogged (> 256 KB)
+      if (client.readyState === 1 && client.bufferedAmount < 256 * 1024) {
         client.send(data);
       }
     });
-  });
-  ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] 🎙️ Audio source disconnected`);
   });
 });
 

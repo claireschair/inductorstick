@@ -14,27 +14,33 @@ export default function AudioClassifier() {
   const lastAlertTimeRef = useRef(0);
 
   const ALERT_COOLDOWN_MS = 10000;
-  const INFERENCE_INTERVAL_MS = 1000; // Throttle: Only send to ML every 1 second
-  const WINDOW_SIZE = 44032;
+  const INFERENCE_INTERVAL_MS = 1000; // Throttle inference to max 1 per second
+  const WINDOW_SIZE = 44032; // Number of samples per ML window
   const DEVICE_ID = "2";
 
   const connectHardwareStream = () => {
-    console.log("Connecting to hardware audio stream on port 8080...");
+    console.log(`[${new Date().toLocaleTimeString()}] 🔌 Connecting to live audio WebSocket: ws://localhost:8080/ws/live-audio...`);
+
     const ws = new WebSocket("ws://localhost:8080/ws/live-audio");
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {
-      console.log("Hardware stream connected successfully.");
+      console.log(`[${new Date().toLocaleTimeString()}] Hardware audio stream connected! Listening for incoming PCM buffer packets...`);
       setIsConnected(true);
     };
 
     ws.onmessage = async (event) => {
       if (event.data instanceof ArrayBuffer) {
-        // Ensure incoming buffer byte length is a multiple of 4 (Float32) to prevent corruption noise
-        if (event.data.byteLength % 4 !== 0) return;
+        // Validate Float32 byte alignment to prevent sound glitching
+        if (event.data.byteLength % 4 !== 0) {
+          console.warn(`[${new Date().toLocaleTimeString()}] Dropped packet: Byte length (${event.data.byteLength}) is not Float32 aligned.`);
+          return;
+        }
 
         const incomingPCM = new Float32Array(event.data);
         const currentBuffer = audioBufferRef.current;
+        
+        // Append incoming stream chunk to current buffer
         const nextBuffer = new Float32Array(currentBuffer.length + incomingPCM.length);
         nextBuffer.set(currentBuffer);
         nextBuffer.set(incomingPCM, currentBuffer.length);
@@ -42,7 +48,7 @@ export default function AudioClassifier() {
 
         const now = Date.now();
 
-        // Check if buffer is ready AND enough time has passed since last inference
+        // Check if buffer has reached the window size and throttle delay has passed
         if (
           audioBufferRef.current.length >= WINDOW_SIZE &&
           !isProcessingRef.current &&
@@ -50,29 +56,37 @@ export default function AudioClassifier() {
         ) {
           lastInferenceTimeRef.current = now;
 
+          console.log(`[${new Date().toLocaleTimeString()}] Audio window full (${audioBufferRef.current.length} samples). Sending payload to ML server on port 5001...`);
+
           const len = audioBufferRef.current.length;
           const inferenceWindow = audioBufferRef.current.subarray(len - WINDOW_SIZE, len);
 
-          // Keep only the most recent half window to prevent infinite buffer growth
+          // Retain overlapping samples for seamless streaming
           audioBufferRef.current = audioBufferRef.current.subarray(len - (WINDOW_SIZE / 2));
 
           await runInference(inferenceWindow);
         } else if (audioBufferRef.current.length > WINDOW_SIZE * 2) {
-          // Prevent memory leaks / buffer bloat if inference is lagging behind
+          // Prevent memory leaks if inference lags behind
+          console.warn(`[${new Date().toLocaleTimeString()}] Audio buffer overflow detected! Pruning backlog...`);
           audioBufferRef.current = audioBufferRef.current.subarray(audioBufferRef.current.length - WINDOW_SIZE);
         }
       }
     };
 
     ws.onclose = () => {
-      console.log("Hardware stream disconnected.");
+      console.warn(`[${new Date().toLocaleTimeString()}] Hardware audio stream disconnected.`);
       setIsConnected(false);
+    };
+
+    ws.onerror = (err) => {
+      console.error(`[${new Date().toLocaleTimeString()}] WebSocket Error on port 8080:`, err);
     };
 
     wsRef.current = ws;
   };
 
   const disconnectHardwareStream = () => {
+    console.log(`[${new Date().toLocaleTimeString()}] Manually disconnecting hardware audio stream...`);
     if (wsRef.current) wsRef.current.close();
     audioBufferRef.current = new Float32Array(0);
     setPrediction("Idle");
@@ -82,23 +96,35 @@ export default function AudioClassifier() {
 
   const triggerDeviceCheckIn = async (detectedClass) => {
     const now = Date.now();
-    if (now - lastAlertTimeRef.current < ALERT_COOLDOWN_MS) return;
+    const remainingCooldown = ALERT_COOLDOWN_MS - (now - lastAlertTimeRef.current);
+
+    if (remainingCooldown > 0) {
+      console.log(`[${new Date().toLocaleTimeString()}] Alert suppressed by active cooldown (${(remainingCooldown / 1000).toFixed(1)}s remaining)`);
+      return;
+    }
+
     lastAlertTimeRef.current = now;
 
     try {
+      console.log(`[${new Date().toLocaleTimeString()}] Target class matched! Writing check-in alert to Firestore for Device #${DEVICE_ID}...`);
+      
       await setDoc(doc(db, "alerts", DEVICE_ID), {
         deviceId: Number(DEVICE_ID),
         status: "checkin",
         triggerReason: detectedClass,
         createdAt: new Date().toISOString(),
       });
+
+      console.log(`[${new Date().toLocaleTimeString()}] SUCCESS: Firestore alert created for Device #${DEVICE_ID}!`);
     } catch (err) {
-      console.error("Error creating Firestore alert:", err);
+      console.error(`[${new Date().toLocaleTimeString()}] Failed to write alert to Firestore:`, err);
     }
   };
 
   const runInference = async (pcmWindow) => {
     isProcessingRef.current = true;
+    const startTime = performance.now();
+
     try {
       const response = await fetch("http://localhost:5001/predict", {
         method: "POST",
@@ -106,19 +132,32 @@ export default function AudioClassifier() {
         body: pcmWindow.buffer,
       });
 
+      const roundTripMs = (performance.now() - startTime).toFixed(1);
+
       if (response.ok) {
         const result = await response.json();
+        console.log(`[${new Date().toLocaleTimeString()}] Inference complete (${roundTripMs}ms):`, result);
+
         if (result.status === "success") {
           setPrediction(result.class);
           setConfidence((result.confidence * 100).toFixed(1));
 
+          console.log(
+            `[${new Date().toLocaleTimeString()}] Detected: "${result.class}" | Confidence: ${(result.confidence * 100).toFixed(1)}%`
+          );
+
           if (result.class.toLowerCase().includes("1 class 2")) {
+            console.log(`[${new Date().toLocaleTimeString()}] Target sound detected ("1 class 2"). Initiating trigger check...`);
             await triggerDeviceCheckIn(result.class);
           }
+        } else {
+          console.warn(`[${new Date().toLocaleTimeString()}] ML server reported an internal failure:`, result);
         }
+      } else {
+        console.error(`[${new Date().toLocaleTimeString()}] ML server returned HTTP status: ${response.status}`);
       }
     } catch (err) {
-      console.error("Error communicating with ML server on port 5001:", err);
+      console.error(`[${new Date().toLocaleTimeString()}] Error communicating with ML server on http://localhost:5001/predict:`, err);
     } finally {
       isProcessingRef.current = false;
     }
@@ -133,7 +172,7 @@ export default function AudioClassifier() {
   return (
     <div style={{ padding: "2rem", maxWidth: "500px", margin: "2rem auto", border: "1px solid #ccc", borderRadius: "8px" }}>
       <h2>Hardware Audio Stream Monitor</h2>
-      <button
+      <button 
         onClick={isConnected ? disconnectHardwareStream : connectHardwareStream}
         style={{
           padding: "0.75rem 1.5rem",
@@ -143,7 +182,7 @@ export default function AudioClassifier() {
           borderRadius: "4px",
           cursor: "pointer",
           fontWeight: "bold",
-          width: "100%",
+          width: "100%"
         }}
       >
         {isConnected ? "Disconnect Stream" : "Connect Hardware Stream"}

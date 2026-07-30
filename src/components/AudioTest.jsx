@@ -1,76 +1,96 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef } from "react";
 
-export default function AudioClassifier() {
-  const [isRecording, setIsRecording] = useState(false);
-  const [status, setStatus] = useState('Offline (Hardware Mode)');
-  const [output, setOutput] = useState('Idle');
-  
-  const mediaRecorderRef = useRef(null);
-  const audioChunksRef = useRef([]);
+export default function AudioTest() {
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [status, setStatus] = useState("Idle");
 
-  const handleConnectMic = async () => {
-    if (isRecording) {
-      // Stop local recording
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.stop();
-        mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      }
-      setIsRecording(false);
-      setStatus('Offline (Hardware Mode)');
-      setOutput('Idle');
-      return;
-    }
+  const wsRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const processorRef = useRef(null);
+  const streamRef = useRef(null);
 
+  const startEmulation = async () => {
     try {
-      // Request local browser microphone access
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
+      setStatus("Connecting to ingest server...");
 
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
+      const ws = new WebSocket("ws://localhost:8081/api/esp32-audio");
+      ws.binaryType = "arraybuffer";
+
+      ws.onopen = async () => {
+        setStatus("Connected. Accessing microphone...");
+
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        streamRef.current = stream;
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioContext({ sampleRate: 16000 });
+        audioContextRef.current = audioContext;
+
+        const source = audioContext.createMediaStreamSource(stream);
+        const processor = audioContext.createScriptProcessor(1024, 1, 1);
+        processorRef.current = processor;
+
+        processor.onaudioprocess = (e) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            const inputPCM = e.inputBuffer.getChannelData(0);
+            const floatBuffer = new Float32Array(inputPCM);
+            ws.send(floatBuffer.buffer);
+          }
+        };
+
+        source.connect(processor);
+        processor.connect(audioContext.destination);
+
+        setIsSimulating(true);
+        setStatus("Transmitting microphone stream...");
       };
 
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        setOutput('Processing captured stream...');
-        
-        // This is where your model processing or websocket forwarder will take the blob
-        console.log('Local Mic Audio Blob ready:', audioBlob);
+      ws.onclose = () => {
+        stopEmulation();
+        setStatus("Disconnected");
       };
 
-      mediaRecorderRef.current.start(1000); // Collect data chunks every second
-      setIsRecording(true);
-      setStatus('Connected (Local PC Mic)');
-      setOutput('Streaming live audio...');
+      ws.onerror = () => {
+        setStatus("Connection error on port 8081");
+      };
+
+      wsRef.current = ws;
     } catch (err) {
-      console.error('Microphone access failed:', err);
-      setStatus('Error: Mic Access Denied');
+      console.error(err);
+      setStatus("Microphone access denied");
     }
   };
 
+  const stopEmulation = () => {
+    if (processorRef.current) processorRef.current.disconnect();
+    if (audioContextRef.current) audioContextRef.current.close();
+    if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
+    if (wsRef.current) wsRef.current.close();
+
+    setIsSimulating(false);
+    setStatus("Idle");
+  };
+
   return (
-    <div style={{ padding: '1rem', border: '1px solid #ccc', borderRadius: '8px', maxWidth: '400px' }}>
-      <h2>Hardware Stream Monitor</h2>
-      
+    <div style={{ padding: "2rem", maxWidth: "500px", margin: "2rem auto", border: "1px solid #ccc", borderRadius: "8px" }}>
+      <h2>Hardware Stream Emulator</h2>
       <button 
-        onClick={handleConnectMic} 
-        style={{ 
-          padding: '0.5rem 1rem', 
-          backgroundColor: isRecording ? '#ff4d4d' : '#e0e0e0', 
-          color: isRecording ? 'white' : 'black',
-          cursor: 'pointer',
-          fontWeight: 'bold'
+        onClick={isSimulating ? stopEmulation : startEmulation}
+        style={{
+          padding: "0.75rem 1.5rem",
+          backgroundColor: isSimulating ? "#d9534f" : "#0275d8",
+          color: "white",
+          border: "none",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontWeight: "bold"
         }}
       >
-        {isRecording ? 'Disconnect Mic' : 'Connect PC Mic (Fallback)'}
+        {isSimulating ? "Stop Transmission" : "Start Transmitting Mic Data"}
       </button>
 
-      <div style={{ marginTop: '1rem' }}>
+      <div style={{ marginTop: "1.5rem" }}>
         <p>Status: <strong>{status}</strong></p>
-        <p>Output: <strong>{output}</strong></p>
       </div>
     </div>
   );

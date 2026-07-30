@@ -11,23 +11,19 @@ import Larp from "./pages/Larp";
 import { useAuth } from "./context/AuthContext";
 import SupervisorAlertBanner from "./components/SupervisorAlertBanner";
 import "./styles/App.css";
-import AudioTest from './components/AudioTest'; //uncommitted
+import AudioTest from "./components/AudioTest";
 import AudioClassifier from "./components/AudioClassifier";
 
 function App() {
   const location = useLocation();
-  const hideLayoutPaths = ["/login", "/signup", "/larp", "/test-audio"];
-  const shouldShowLayout = !hideLayoutPaths.includes(location.pathname);
 
   return (
     <div className="app-container">
-      {/* Hide navbar on larp and test-audio if you want a clean view */}
-      {location.pathname !== "/larp" && location.pathname !== "/test-audio" && <Navbar />}
-      
+      {location.pathname !== "/larp" && 
+       location.pathname !== "/test-audio" && 
+       location.pathname !== "/audio-monitor" && <Navbar />}
+
       <SupervisorAlertBanner />
-      
-      {/* Renders only on core app views */}
-      {shouldShowLayout && <AudioClassifier />}
 
       <Routes>
         <Route path="/" element={<Home />} />
@@ -38,8 +34,8 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/larp" element={<Larp />} />
-        
-        {/*register new route*/}
+
+        <Route path="/audio-monitor" element={<AudioClassifier />} />
         <Route path="/test-audio" element={<AudioTest />} />
       </Routes>
     </div>

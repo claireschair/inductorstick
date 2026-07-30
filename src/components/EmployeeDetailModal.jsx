@@ -120,6 +120,14 @@ function EmployeeDetailModal({ employee, onClose }) {
     };
   }, []);
 
+  // Dedicated mount/unmount lifecycle — must be declared BEFORE video & audio effects
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Start video WebSocket immediately on mount
   useEffect(() => {
     connectVideo();
@@ -197,12 +205,9 @@ function EmployeeDetailModal({ employee, onClose }) {
   }, [muted]);
 
   useEffect(() => {
-    mountedRef.current = true;
     connectAudio();
 
     return () => {
-      mountedRef.current = false;
-
       clearTimeout(reconnectAudioRef.current);
 
       if (audioWsRef.current) {

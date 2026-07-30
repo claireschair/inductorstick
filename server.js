@@ -71,7 +71,8 @@ wssEsp32Video.on("connection", (ws, req) => {
       console.log(`[${new Date().toLocaleTimeString()}] 🎥 Video frame #${frameCount} received (${data.length || data.byteLength} bytes) → relaying to ${frontendCount} frontend client(s)`);
     }
     wssFrontendVideo.clients.forEach((client) => {
-      if (client.readyState === 1) {
+      // Skip clients with backed-up send buffers (>512KB queued) to prevent memory bloat
+      if (client.readyState === 1 && client.bufferedAmount < 512 * 1024) {
         client.send(data);
       }
     });

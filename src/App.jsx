@@ -11,32 +11,36 @@ import Larp from "./pages/Larp";
 import { useAuth } from "./context/AuthContext";
 import SupervisorAlertBanner from "./components/SupervisorAlertBanner";
 import "./styles/App.css";
-
-function DashboardRoute() {
-  const { userProfile } = useAuth();
-
-  if (userProfile?.role === "supervisor") {
-    return <SupervisorDashboard />;
-  } else {
-    return <WorkerDashboard />;
-  }
-}
+import AudioTest from './components/AudioTest'; //uncommitted
+import AudioClassifier from "./components/AudioClassifier";
 
 function App() {
   const location = useLocation();
+  const hideLayoutPaths = ["/login", "/signup", "/larp", "/test-audio"];
+  const shouldShowLayout = !hideLayoutPaths.includes(location.pathname);
 
   return (
     <div className="app-container">
-      {location.pathname !== "/larp" && <Navbar />}
+      {/* Hide navbar on larp and test-audio if you want a clean view */}
+      {location.pathname !== "/larp" && location.pathname !== "/test-audio" && <Navbar />}
+      
       <SupervisorAlertBanner />
+      
+      {/* Renders only on core app views */}
+      {shouldShowLayout && <AudioClassifier />}
+
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<DashboardRoute />} />
+        <Route path="/supervisor/dashboard" element={<SupervisorDashboard />} />
+        <Route path="/worker/dashboard" element={<WorkerDashboard />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/larp" element={<Larp />} />
+        
+        {/*register new route*/}
+        <Route path="/test-audio" element={<AudioTest />} />
       </Routes>
     </div>
   );

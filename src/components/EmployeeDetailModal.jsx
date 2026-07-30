@@ -10,7 +10,6 @@ const AUDIO_SAMPLE_RATE = 16000;
 // ESP32 QVGA RGB565 frame dimensions
 const FRAME_WIDTH = 320;
 const FRAME_HEIGHT = 240;
-const ESP32_WS_PORT = 81;
 
 function EmployeeDetailModal({ employee, onClose }) {
   const { getDeviceTelemetry } = useTelemetry();
@@ -52,30 +51,13 @@ function EmployeeDetailModal({ employee, onClose }) {
   const [videoStatus, setVideoStatus] = useState("connecting");
   const [audioStatus, setAudioStatus] = useState("disconnected");
   const [muted, setMuted] = useState(false);
-  const [esp32Ip, setEsp32Ip] = useState(null);
 
-  // Fetch ESP32 IP from server
-  useEffect(() => {
-    fetch(`http://${WS_HOST}:${WS_PORT}/api/esp32-info`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ip) {
-          setEsp32Ip(data.ip);
-        } else {
-          setVideoStatus("disconnected");
-        }
-      })
-      .catch(() => {
-        setVideoStatus("disconnected");
-      });
-  }, []);
-
-  // Connect to ESP32 WebSocket for RGB565 video stream
+  // Connect to server's video relay WebSocket (ESP32 → server → frontend)
   const connectVideo = useCallback(() => {
-    if (!mountedRef.current || !esp32Ip) return;
+    if (!mountedRef.current) return;
     setVideoStatus("connecting");
 
-    const ws = new WebSocket(`ws://${esp32Ip}:${ESP32_WS_PORT}`);
+    const ws = new WebSocket(`ws://${WS_HOST}:${WS_PORT}/ws/live-video`);
     ws.binaryType = "arraybuffer";
     videoWsRef.current = ws;
 
@@ -123,13 +105,11 @@ function EmployeeDetailModal({ employee, onClose }) {
     ws.onerror = () => {
       ws.close();
     };
-  }, [esp32Ip]);
+  }, []);
 
-  // Start video WebSocket when ESP32 IP is available
+  // Start video WebSocket immediately on mount
   useEffect(() => {
-    if (esp32Ip) {
-      connectVideo();
-    }
+    connectVideo();
 
     return () => {
       clearTimeout(reconnectVideoRef.current);
@@ -138,7 +118,7 @@ function EmployeeDetailModal({ employee, onClose }) {
         videoWsRef.current.close();
       }
     };
-  }, [esp32Ip, connectVideo]);
+  }, [connectVideo]);
 
 
   const connectAudio = useCallback(() => {

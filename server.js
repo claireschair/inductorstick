@@ -17,13 +17,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const PORT_NANO = 8082;
+const PORT_NANO = 8080;
 const PORT_ESP32 = 8081;
 
 const wssEsp32Audio = new WebSocketServer({ noServer: true });
 const wssFrontendAudio = new WebSocketServer({ noServer: true });
-
-// --- Video WebSocket relay (ESP32 → Server → Frontend) ---
 const wssEsp32Video = new WebSocketServer({ noServer: true });
 const wssFrontendVideo = new WebSocketServer({ noServer: true });
 
@@ -61,7 +59,6 @@ wssFrontendAudio.on("connection", (ws) => {
   });
 });
 
-// ESP32 video source → relay binary frames to all frontend video clients
 wssEsp32Video.on("connection", (ws, req) => {
   console.log(`[${new Date().toLocaleTimeString()}] ✅ ESP32 video source connected`);
   extractRemoteIp(ws, req);
@@ -73,7 +70,6 @@ wssEsp32Video.on("connection", (ws, req) => {
       console.log(`[${new Date().toLocaleTimeString()}] 🎥 Video frame #${frameCount} received (${data.length || data.byteLength} bytes) → relaying to ${frontendCount} frontend client(s)`);
     }
     wssFrontendVideo.clients.forEach((client) => {
-      // Skip clients with backed-up send buffers (>512KB queued) to prevent memory bloat
       if (client.readyState === 1 && client.bufferedAmount < 512 * 1024) {
         client.send(data);
       }
@@ -197,121 +193,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-
-
-  if (req.url.startsWith("/api/announcement")) {
-    if (req.method === "GET") {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ announcement: currentAnnouncement }));
-      return;
-    }
-
-    if (req.method === "POST" && req.url.startsWith("/api/data")) {
-      let body = "";
-      req.on("data", (chunk) => {
-        body += chunk.toString();
-      });
-
-      req.on("end", async () => {
-        try {
-          const payload = JSON.parse(body);
-          const deviceId = String(payload.id ?? "1");
-
-          const telemetryData = {
-            id: payload.id ?? 1,
-            status: payload.status || "active",
-            checkingIn: Boolean(payload.checkingIn),
-            timeSinceLastCheckIn: Number(payload.timeSinceLastCheckIn || 0),
-            sensorData: {
-              temperature: payload.sensorData?.temperature ?? null,
-              humidity: payload.sensorData?.humidity ?? null,
-            },
-            gyroData: {
-              x: payload.gyroData?.x ?? null,
-              y: payload.gyroData?.y ?? null,
-              z: payload.gyroData?.z ?? null,
-            },
-            accelData: {
-              x: payload.accelData?.x ?? null,
-              y: payload.accelData?.y ?? null,
-              z: payload.accelData?.z ?? null,
-            },
-            updatedAt: new Date().toISOString(),
-          };
-
-          await setDoc(doc(db, "telemetry", deviceId), telemetryData, { merge: true });
-
-          let triggerCheckInFlag = false;
-          try {
-            const alertRef = doc(db, "alerts", deviceId);
-            const alertSnap = await getDoc(alertRef);
-            if (alertSnap.exists()) {
-              const alertData = alertSnap.data();
-              if (alertData.status === "checkin") {
-                triggerCheckInFlag = true;
-                await setDoc(alertRef, { status: "processed" }, { merge: true });
-              }
-            }
-          } catch (err) {
-            console.error("Error checking alerts:", err.message);
-          }
-
-          let tempMaxThreshold = 85;
-          let tempMinThreshold = 50;
-          let humidityThreshold = 80;
-          let checkInInterval = 15;
-          let soundMaxThreshold = 85;
-
-          const targetCompanyCode = userCompanyMap[deviceId];
-          let thresholds = null;
-
-          if (targetCompanyCode && companyThresholds[targetCompanyCode]) {
-            thresholds = companyThresholds[targetCompanyCode];
-          } else if (companyThresholds["HIVEMIND"]) {
-            thresholds = companyThresholds["HIVEMIND"];
-          }
-
-          if (thresholds) {
-            if (thresholds.tempMax !== undefined) tempMaxThreshold = thresholds.tempMax;
-            if (thresholds.tempMin !== undefined) tempMinThreshold = thresholds.tempMin;
-            if (thresholds.humidityMax !== undefined) humidityThreshold = thresholds.humidityMax;
-            if (thresholds.checkInInterval !== undefined) checkInInterval = thresholds.checkInInterval;
-            if (thresholds.soundMax !== undefined) soundMaxThreshold = thresholds.soundMax;
-          }
-
-          const announcementToSend = (typeof currentAnnouncement === "string" && currentAnnouncement.trim().length > 0)
-            ? currentAnnouncement.trim()
-            : "";
-
-          const employeeName = userNameMap[deviceId] || defaultUserNames[deviceId] || "";
-
-          const responseDoc = {
-            tempMaxThreshold,
-            tempMinThreshold,
-            humidityThreshold,
-            checkInInterval,
-            soundMaxThreshold,
-            employeeName,
-            announcement: announcementToSend,
-            triggerCheckIn: triggerCheckInFlag,
-          };
-
-          const jsonString = JSON.stringify(responseDoc);
-          const payloadBuffer = Buffer.from(jsonString, "utf-8");
-
-          res.writeHead(200, {
-            "Content-Type": "application/json",
-            "Content-Length": payloadBuffer.length,
-            "Connection": "close",
-          });
-          res.end(payloadBuffer);
-        } catch (err) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ success: false, error: err.message }));
-        }
-      });
-      return;
-    }
+  if (req.method === "GET" && req.url.startsWith("/api/announcement")) {
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ announcement: currentAnnouncement }));
+    return;
   }
 
   if (req.method === "POST" && req.url.startsWith("/api/data")) {
@@ -350,6 +235,21 @@ const server = http.createServer((req, res) => {
         };
 
         await setDoc(doc(db, "telemetry", deviceId), telemetryData, { merge: true });
+
+        let triggerCheckInFlag = false;
+        try {
+          const alertRef = doc(db, "alerts", deviceId);
+          const alertSnap = await getDoc(alertRef);
+          if (alertSnap.exists()) {
+            const alertData = alertSnap.data();
+            if (alertData.status === "checkin") {
+              triggerCheckInFlag = true;
+              await setDoc(alertRef, { status: "processed" }, { merge: true });
+            }
+          }
+        } catch (err) {
+          console.error("Error checking alerts:", err.message);
+        }
 
         let tempMaxThreshold = 85;
         let tempMinThreshold = 50;
@@ -436,6 +336,7 @@ const server = http.createServer((req, res) => {
           soundMaxThreshold,
           employeeName,
           announcement: announcementToSend,
+          triggerCheckIn: triggerCheckInFlag,
         };
 
         const jsonString = JSON.stringify(responseDoc);

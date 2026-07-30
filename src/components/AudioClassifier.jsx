@@ -18,7 +18,7 @@ export default function AudioClassifier() {
 
   const connectHardwareStream = () => {
     console.log("Attempting to connect to hardware stream...");
-    const ws = new WebSocket("ws://localhost:8082/ws/live-audio");
+    const ws = new WebSocket("ws://localhost:8080/ws/live-audio");
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {

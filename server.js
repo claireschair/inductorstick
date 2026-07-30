@@ -61,9 +61,15 @@ wssFrontendAudio.on("connection", (ws) => {
 
 // ESP32 video source → relay binary frames to all frontend video clients
 wssEsp32Video.on("connection", (ws, req) => {
-  console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source connected`);
+  console.log(`[${new Date().toLocaleTimeString()}] ✅ ESP32 video source connected`);
   extractRemoteIp(ws, req);
+  let frameCount = 0;
   ws.on("message", (data) => {
+    frameCount++;
+    const frontendCount = wssFrontendVideo.clients.size;
+    if (frameCount <= 5 || frameCount % 100 === 0) {
+      console.log(`[${new Date().toLocaleTimeString()}] 🎥 Video frame #${frameCount} received (${data.length || data.byteLength} bytes) → relaying to ${frontendCount} frontend client(s)`);
+    }
     wssFrontendVideo.clients.forEach((client) => {
       if (client.readyState === 1) {
         client.send(data);
@@ -71,14 +77,17 @@ wssEsp32Video.on("connection", (ws, req) => {
     });
   });
   ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source disconnected`);
+    console.log(`[${new Date().toLocaleTimeString()}] ❌ ESP32 video source disconnected (sent ${frameCount} frames total)`);
+  });
+  ws.on("error", (err) => {
+    console.error(`[${new Date().toLocaleTimeString()}] ESP32 video WS error:`, err.message);
   });
 });
 
 wssFrontendVideo.on("connection", (ws) => {
-  console.log(`[${new Date().toLocaleTimeString()}] Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
+  console.log(`[${new Date().toLocaleTimeString()}] ✅ Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
   ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
+    console.log(`[${new Date().toLocaleTimeString()}] ❌ Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
   });
 });
 

@@ -57,11 +57,14 @@ function EmployeeDetailModal({ employee, onClose }) {
     if (!mountedRef.current) return;
     setVideoStatus("connecting");
 
-    const ws = new WebSocket(`ws://${WS_HOST}:${WS_PORT}/ws/live-video`);
+    const wsUrl = `ws://${WS_HOST}:${WS_PORT}/ws/live-video`;
+    console.log("[Video] Connecting to:", wsUrl);
+    const ws = new WebSocket(wsUrl);
     ws.binaryType = "arraybuffer";
     videoWsRef.current = ws;
 
     ws.onopen = () => {
+      console.log("[Video] ✅ WebSocket connected");
       if (mountedRef.current) setVideoStatus("connected");
     };
 
@@ -72,6 +75,14 @@ function EmployeeDetailModal({ employee, onClose }) {
 
       const frameData = event.data;
       const expectedBytes = FRAME_WIDTH * FRAME_HEIGHT * 2;
+      
+      // Log first few frames and size mismatches for debugging
+      if (!ws._frameCount) ws._frameCount = 0;
+      ws._frameCount++;
+      if (ws._frameCount <= 5 || frameData.byteLength !== expectedBytes) {
+        console.log(`[Video] Frame #${ws._frameCount}: ${frameData.byteLength} bytes (expected ${expectedBytes})`);
+      }
+      
       if (frameData.byteLength !== expectedBytes) return;
 
       const ctx = canvas.getContext("2d");
@@ -96,13 +107,15 @@ function EmployeeDetailModal({ employee, onClose }) {
       ctx.putImageData(imageData, 0, 0);
     };
 
-    ws.onclose = () => {
+    ws.onclose = (event) => {
+      console.log(`[Video] ❌ WebSocket closed (code: ${event.code}, reason: ${event.reason})`);
       if (!mountedRef.current) return;
       setVideoStatus("disconnected");
       reconnectVideoRef.current = setTimeout(connectVideo, RECONNECT_DELAY);
     };
 
-    ws.onerror = () => {
+    ws.onerror = (err) => {
+      console.error("[Video] WebSocket error:", err);
       ws.close();
     };
   }, []);

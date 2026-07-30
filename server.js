@@ -18,10 +18,12 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const PORT_NANO = 8080;
-const PORT_ESP32 = 8081;
+const PORT_ESP32_VIDEO = 6767;
+const PORT_ESP32_AUDIO = 8081;
 
 const wssEsp32Audio = new WebSocketServer({ noServer: true });
 const wssFrontendAudio = new WebSocketServer({ noServer: true });
+
 const wssEsp32Video = new WebSocketServer({ noServer: true });
 const wssFrontendVideo = new WebSocketServer({ noServer: true });
 
@@ -60,14 +62,14 @@ wssFrontendAudio.on("connection", (ws) => {
 });
 
 wssEsp32Video.on("connection", (ws, req) => {
-  console.log(`[${new Date().toLocaleTimeString()}] ✅ ESP32 video source connected`);
+  console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source connected`);
   extractRemoteIp(ws, req);
   let frameCount = 0;
   ws.on("message", (data) => {
     frameCount++;
     const frontendCount = wssFrontendVideo.clients.size;
     if (frameCount <= 5 || frameCount % 100 === 0) {
-      console.log(`[${new Date().toLocaleTimeString()}] 🎥 Video frame #${frameCount} received (${data.length || data.byteLength} bytes) → relaying to ${frontendCount} frontend client(s)`);
+      console.log(`[${new Date().toLocaleTimeString()}] Video frame #${frameCount} received (${data.length || data.byteLength} bytes) -> relaying to ${frontendCount} frontend client(s)`);
     }
     wssFrontendVideo.clients.forEach((client) => {
       if (client.readyState === 1 && client.bufferedAmount < 512 * 1024) {
@@ -76,7 +78,7 @@ wssEsp32Video.on("connection", (ws, req) => {
     });
   });
   ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] ❌ ESP32 video source disconnected (sent ${frameCount} frames total)`);
+    console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source disconnected (sent ${frameCount} frames total)`);
   });
   ws.on("error", (err) => {
     console.error(`[${new Date().toLocaleTimeString()}] ESP32 video WS error:`, err.message);
@@ -84,9 +86,9 @@ wssEsp32Video.on("connection", (ws, req) => {
 });
 
 wssFrontendVideo.on("connection", (ws) => {
-  console.log(`[${new Date().toLocaleTimeString()}] ✅ Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
+  console.log(`[${new Date().toLocaleTimeString()}] Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
   ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] ❌ Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
+    console.log(`[${new Date().toLocaleTimeString()}] Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
   });
 });
 
@@ -193,10 +195,45 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.method === "GET" && req.url.startsWith("/api/announcement")) {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ announcement: currentAnnouncement }));
-    return;
+  if (req.url.startsWith("/api/announcement")) {
+    if (req.method === "GET") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ announcement: currentAnnouncement }));
+      return;
+    }
+
+    if (req.method === "POST") {
+      let body = "";
+      req.on("data", (chunk) => (body += chunk.toString()));
+      req.on("end", async () => {
+        try {
+          const payload = JSON.parse(body);
+          const newAnnouncement = payload.announcement ?? payload.text ?? "";
+          if (newAnnouncement && typeof newAnnouncement === "string" && newAnnouncement.trim().length > 0) {
+            currentAnnouncement = newAnnouncement.trim();
+            await setDoc(doc(db, "announcements", "current"), {
+              text: currentAnnouncement,
+              active: true,
+              updatedAt: new Date().toISOString(),
+            }, { merge: true });
+          } else {
+            currentAnnouncement = "";
+            await setDoc(doc(db, "announcements", "current"), {
+              text: "",
+              active: false,
+              updatedAt: new Date().toISOString(),
+            }, { merge: true });
+          }
+
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: true, announcement: currentAnnouncement }));
+        } catch (err) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+      });
+      return;
+    }
   }
 
   if (req.method === "POST" && req.url.startsWith("/api/data")) {
@@ -406,7 +443,7 @@ server.on("upgrade", (req, socket, head) => {
 esp32Server.on("upgrade", (req, socket, head) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
-  if (pathname === "/api/audio-stream" || pathname === "/api/esp32-audio") {
+  if (pathname === "/api/audio-stream" || pathname === "/api/poopybutt-audio") {
     wssEsp32Audio.handleUpgrade(req, socket, head, (ws) => {
       wssEsp32Audio.emit("connection", ws, req);
     });

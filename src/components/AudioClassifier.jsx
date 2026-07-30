@@ -17,7 +17,7 @@ export default function AudioClassifier() {
   const DEVICE_ID = "2";
 
   const connectHardwareStream = () => {
-    console.log("Attempting to connect to hardware stream...");
+    console.log("Attempting to connect to hardware audio stream on port 8080...");
     const ws = new WebSocket("ws://localhost:8080/ws/live-audio");
     ws.binaryType = "arraybuffer";
 
@@ -88,7 +88,7 @@ export default function AudioClassifier() {
   const runInference = async (pcmWindow) => {
     isProcessingRef.current = true;
     try {
-      const response = await fetch("http://localhost:5000/predict", {
+      const response = await fetch("http://localhost:5001/predict", {
         method: "POST",
         headers: { "Content-Type": "application/octet-stream" },
         body: pcmWindow.buffer,
@@ -135,7 +135,8 @@ export default function AudioClassifier() {
           border: "none",
           borderRadius: "4px",
           cursor: "pointer",
-          fontWeight: "bold"
+          fontWeight: "bold",
+          width: "100%"
         }}
       >
         {isConnected ? "Disconnect Stream" : "Connect Hardware Stream"}

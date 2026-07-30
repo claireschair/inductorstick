@@ -11,13 +11,13 @@ export default function AudioTest() {
 
   const startEmulation = async () => {
     try {
-      setStatus("Connecting to ingest server...");
+      setStatus("Connecting to microphone ingest server on port 8081...");
 
       const ws = new WebSocket("ws://localhost:8081/api/esp32-audio");
       ws.binaryType = "arraybuffer";
 
       ws.onopen = async () => {
-        setStatus("Connected. Accessing microphone...");
+        setStatus("Connected. Accessing browser microphone...");
 
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         streamRef.current = stream;
@@ -73,7 +73,11 @@ export default function AudioTest() {
 
   return (
     <div style={{ padding: "2rem", maxWidth: "500px", margin: "2rem auto", border: "1px solid #ccc", borderRadius: "8px" }}>
-      <h2>Hardware Stream Emulator</h2>
+      <h2>Hardware Audio Stream Emulator</h2>
+      <p style={{ color: "#666", fontSize: "0.9rem" }}>
+        Captures audio from your browser microphone and streams it to the Node backend on Port 8081 to mimic the ESP32 mic node.
+      </p>
+
       <button 
         onClick={isSimulating ? stopEmulation : startEmulation}
         style={{
@@ -83,7 +87,9 @@ export default function AudioTest() {
           border: "none",
           borderRadius: "4px",
           cursor: "pointer",
-          fontWeight: "bold"
+          fontWeight: "bold",
+          width: "100%",
+          marginTop: "1rem"
         }}
       >
         {isSimulating ? "Stop Transmission" : "Start Transmitting Mic Data"}

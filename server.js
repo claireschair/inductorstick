@@ -154,33 +154,13 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         ip: lastEsp32Ip,
-        streamUrl: lastEsp32Ip ? `http://${lastEsp32Ip}/stream` : null,
+        wsPort: 81,
       })
     );
     return;
   }
 
-  if (req.method === "GET" && req.url.startsWith("/api/video-proxy")) {
-    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
-    const espIp = parsedUrl.searchParams.get("ip") || lastEsp32Ip;
-    if (!espIp) {
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "No ESP32 IP address available" }));
-      return;
-    }
-    const targetUrl = `http://${espIp}/stream`;
-    http
-      .get(targetUrl, (proxyRes) => {
-        res.writeHead(proxyRes.statusCode, proxyRes.headers);
-        proxyRes.pipe(res);
-      })
-      .on("error", (err) => {
-        console.error("Video proxy error:", err.message);
-        res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Failed to connect to ESP32 stream", details: err.message }));
-      });
-    return;
-  }
+
 
   if (req.url.startsWith("/api/announcement")) {
     if (req.method === "GET") {

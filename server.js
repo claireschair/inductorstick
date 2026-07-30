@@ -4,6 +4,7 @@ import { WebSocketServer } from "ws";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "firebase/firestore";
 
+// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyDGOR3kDdKOXmOX9Zif09-ZPzoBRDAcSnI",
   authDomain: "inductor-stick.firebaseapp.com",
@@ -17,10 +18,11 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// --- Server Ports ---
 const PORT_NANO = 8080;
-const PORT_ESP32_VIDEO = 6767;
-const PORT_ESP32_AUDIO = 8081;
+const PORT_ESP32 = 6767;
 
+// --- WebSocket Servers ---
 const wssEsp32Audio = new WebSocketServer({ noServer: true });
 const wssFrontendAudio = new WebSocketServer({ noServer: true });
 
@@ -29,16 +31,18 @@ const wssFrontendVideo = new WebSocketServer({ noServer: true });
 
 let lastEsp32Ip = null;
 
+// --- Helper: Extract ESP32 IP ---
 function extractRemoteIp(ws, req) {
   if (!req) return;
   let rawIp = req.socket?.remoteAddress || "";
   if (rawIp.startsWith("::ffff:")) rawIp = rawIp.substring(7);
   if (rawIp && rawIp !== "127.0.0.1" && rawIp !== "::1") {
     lastEsp32Ip = rawIp;
-    console.log(`[${new Date().toLocaleTimeString()}] Auto-discovered ESP32 IP from WebSocket: ${rawIp}`);
+    console.log(`[${new Date().toLocaleTimeString()}] Auto-discovered ESP32 IP: ${rawIp}`);
   }
 }
 
+// --- Audio WebSocket Listeners ---
 wssEsp32Audio.on("connection", (ws, req) => {
   console.log(`[${new Date().toLocaleTimeString()}] ESP32 audio source connected`);
   extractRemoteIp(ws, req);
@@ -61,15 +65,16 @@ wssFrontendAudio.on("connection", (ws) => {
   });
 });
 
+// --- Video WebSocket Relay (ESP32 → Server → Frontend) ---
 wssEsp32Video.on("connection", (ws, req) => {
-  console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source connected`);
+  console.log(`[${new Date().toLocaleTimeString()}] ✅ ESP32 video source connected`);
   extractRemoteIp(ws, req);
   let frameCount = 0;
   ws.on("message", (data) => {
     frameCount++;
     const frontendCount = wssFrontendVideo.clients.size;
     if (frameCount <= 5 || frameCount % 100 === 0) {
-      console.log(`[${new Date().toLocaleTimeString()}] Video frame #${frameCount} received (${data.length || data.byteLength} bytes) -> relaying to ${frontendCount} frontend client(s)`);
+      console.log(`[${new Date().toLocaleTimeString()}] 🎥 Video frame #${frameCount} received (${data.length || data.byteLength} bytes) → relaying to ${frontendCount} frontend client(s)`);
     }
     wssFrontendVideo.clients.forEach((client) => {
       if (client.readyState === 1 && client.bufferedAmount < 512 * 1024) {
@@ -78,7 +83,7 @@ wssEsp32Video.on("connection", (ws, req) => {
     });
   });
   ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] ESP32 video source disconnected (sent ${frameCount} frames total)`);
+    console.log(`[${new Date().toLocaleTimeString()}] ❌ ESP32 video source disconnected (sent ${frameCount} frames total)`);
   });
   ws.on("error", (err) => {
     console.error(`[${new Date().toLocaleTimeString()}] ESP32 video WS error:`, err.message);
@@ -86,13 +91,25 @@ wssEsp32Video.on("connection", (ws, req) => {
 });
 
 wssFrontendVideo.on("connection", (ws) => {
-  console.log(`[${new Date().toLocaleTimeString()}] Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
+  console.log(`[${new Date().toLocaleTimeString()}] ✅ Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
   ws.on("close", () => {
-    console.log(`[${new Date().toLocaleTimeString()}] Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
+    console.log(`[${new Date().toLocaleTimeString()}] ❌ Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
   });
 });
 
+// --- Firestore Watchers ---
 let currentAnnouncement = "";
+let userCompanyMap = {};
+let userNameMap = {};
+let companyThresholds = {};
+
+const defaultUserNames = {
+  "1": "Belal Hasan",
+  "2": "Denisa Iljas",
+  "3": "Patrick Darmawi-Iskandar",
+  "4": "Maryann Whitney",
+  "5": "Fuad Veliev",
+};
 
 onSnapshot(
   doc(db, "announcements", "current"),
@@ -110,22 +127,8 @@ onSnapshot(
       currentAnnouncement = "";
     }
   },
-  (err) => {
-    console.error("Error watching announcements document:", err.message);
-  }
+  (err) => console.error("Error watching announcements document:", err.message)
 );
-
-let userCompanyMap = {};
-let userNameMap = {};
-let companyThresholds = {};
-
-const defaultUserNames = {
-  "1": "Belal Hasan",
-  "2": "Denisa Iljas",
-  "3": "Patrick Darmawi-Iskandar",
-  "4": "Maryann Whitney",
-  "5": "Fuad Veliev",
-};
 
 onSnapshot(
   collection(db, "users"),
@@ -135,19 +138,13 @@ onSnapshot(
       const idVal = data.id !== undefined ? data.id : docSnap.id;
       if (idVal !== undefined) {
         const idStr = String(idVal);
-        if (data.companyCode) {
-          userCompanyMap[idStr] = data.companyCode;
-        }
+        if (data.companyCode) userCompanyMap[idStr] = data.companyCode;
         const name = `${data.firstName || ""} ${data.lastName || ""}`.trim();
-        if (name) {
-          userNameMap[idStr] = name;
-        }
+        if (name) userNameMap[idStr] = name;
       }
     });
   },
-  (err) => {
-    console.error("Error watching users collection:", err.message);
-  }
+  (err) => console.error("Error watching users collection:", err.message)
 );
 
 onSnapshot(
@@ -166,11 +163,10 @@ onSnapshot(
       }
     });
   },
-  (err) => {
-    console.error("Error watching companies collection:", err.message);
-  }
+  (err) => console.error("Error watching companies collection:", err.message)
 );
 
+// --- Main HTTP Server (Nano + Frontend) ---
 const server = http.createServer((req, res) => {
   console.log(`[${new Date().toLocaleTimeString()}] HTTP ${req.method} ${req.url} from ${req.socket.remoteAddress}`);
 
@@ -184,17 +180,43 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // --- API: ESP32 Info (Supports both WS and HTTP stream URL) ---
   if (req.method === "GET" && req.url.startsWith("/api/esp32-info")) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
       JSON.stringify({
         ip: lastEsp32Ip,
         wsPort: 81,
+        streamUrl: lastEsp32Ip ? `http://${lastEsp32Ip}/stream` : null,
       })
     );
     return;
   }
 
+  // --- API: HTTP Video Stream Proxy Fallback ---
+  if (req.method === "GET" && req.url.startsWith("/api/video-proxy")) {
+    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
+    const espIp = parsedUrl.searchParams.get("ip") || lastEsp32Ip;
+    if (!espIp) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "No ESP32 IP address available" }));
+      return;
+    }
+    const targetUrl = `http://${espIp}/stream`;
+    http
+      .get(targetUrl, (proxyRes) => {
+        res.writeHead(proxyRes.statusCode, proxyRes.headers);
+        proxyRes.pipe(res);
+      })
+      .on("error", (err) => {
+        console.error("Video proxy error:", err.message);
+        res.writeHead(502, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Failed to connect to ESP32 stream", details: err.message }));
+      });
+    return;
+  }
+
+  // --- API: Announcements ---
   if (req.url.startsWith("/api/announcement")) {
     if (req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -236,11 +258,10 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // --- API: Ingest Telemetry Data ---
   if (req.method === "POST" && req.url.startsWith("/api/data")) {
     let body = "";
-    req.on("data", (chunk) => {
-      body += chunk.toString();
-    });
+    req.on("data", (chunk) => { body += chunk.toString(); });
 
     req.on("end", async () => {
       try {
@@ -273,21 +294,6 @@ const server = http.createServer((req, res) => {
 
         await setDoc(doc(db, "telemetry", deviceId), telemetryData, { merge: true });
 
-        let triggerCheckInFlag = false;
-        try {
-          const alertRef = doc(db, "alerts", deviceId);
-          const alertSnap = await getDoc(alertRef);
-          if (alertSnap.exists()) {
-            const alertData = alertSnap.data();
-            if (alertData.status === "checkin") {
-              triggerCheckInFlag = true;
-              await setDoc(alertRef, { status: "processed" }, { merge: true });
-            }
-          }
-        } catch (err) {
-          console.error("Error checking alerts:", err.message);
-        }
-
         let tempMaxThreshold = 85;
         let tempMinThreshold = 50;
         let humidityThreshold = 80;
@@ -303,9 +309,7 @@ const server = http.createServer((req, res) => {
           thresholds = companyThresholds["HIVEMIND"];
         } else {
           const firstCode = Object.keys(companyThresholds)[0];
-          if (firstCode) {
-            thresholds = companyThresholds[firstCode];
-          }
+          if (firstCode) thresholds = companyThresholds[firstCode];
         }
 
         if (thresholds) {
@@ -314,18 +318,6 @@ const server = http.createServer((req, res) => {
           if (thresholds.humidityMax !== undefined) humidityThreshold = thresholds.humidityMax;
           if (thresholds.checkInInterval !== undefined) checkInInterval = thresholds.checkInInterval;
           if (thresholds.soundMax !== undefined) soundMaxThreshold = thresholds.soundMax;
-        } else {
-          try {
-            const compSnap = await getDoc(doc(db, "companies", "HIVEMIND"));
-            if (compSnap.exists()) {
-              const cData = compSnap.data();
-              if (cData.tempMax !== undefined) tempMaxThreshold = Number(cData.tempMax);
-              if (cData.tempMin !== undefined) tempMinThreshold = Number(cData.tempMin);
-              if (cData.humidityMax !== undefined) humidityThreshold = Number(cData.humidityMax);
-              if (cData.checkInInterval !== undefined) checkInInterval = Number(cData.checkInInterval);
-              if (cData.soundMax !== undefined) soundMaxThreshold = Number(cData.soundMax);
-            }
-          } catch (compErr) {}
         }
 
         const timeSinceLastCheckInSec = Number(payload.timeSinceLastCheckIn || 0);
@@ -373,7 +365,6 @@ const server = http.createServer((req, res) => {
           soundMaxThreshold,
           employeeName,
           announcement: announcementToSend,
-          triggerCheckIn: triggerCheckInFlag,
         };
 
         const jsonString = JSON.stringify(responseDoc);
@@ -410,12 +401,14 @@ const server = http.createServer((req, res) => {
   res.end(JSON.stringify({ error: "Not found" }));
 });
 
+// --- Secondary Ingest Server (ESP32 Ingest) ---
 const esp32Server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ status: "ESP32 Ingest Server Active", port: PORT_ESP32 }));
 });
 
+// --- Start Servers ---
 server.listen(PORT_NANO, "0.0.0.0", () => {
   console.log(`\n[Nano + Frontend] server listening on 0.0.0.0:${PORT_NANO}`);
 });
@@ -424,6 +417,7 @@ esp32Server.listen(PORT_ESP32, "0.0.0.0", () => {
   console.log(`\n[ESP32 Ingest] server listening on 0.0.0.0:${PORT_ESP32}`);
 });
 
+// --- WebSocket Upgrade Handlers ---
 server.on("upgrade", (req, socket, head) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
@@ -443,7 +437,7 @@ server.on("upgrade", (req, socket, head) => {
 esp32Server.on("upgrade", (req, socket, head) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
-  if (pathname === "/api/audio-stream" || pathname === "/api/poopybutt-audio") {
+  if (pathname === "/api/audio-stream" || pathname === "/api/esp32-audio" || pathname === "/api/poopybutt-audio") {
     wssEsp32Audio.handleUpgrade(req, socket, head, (ws) => {
       wssEsp32Audio.emit("connection", ws, req);
     });

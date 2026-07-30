@@ -23,6 +23,10 @@ const PORT_ESP32 = 8081;
 const wssEsp32Audio = new WebSocketServer({ noServer: true });
 const wssFrontendAudio = new WebSocketServer({ noServer: true });
 
+// --- Video WebSocket relay (ESP32 → Server → Frontend) ---
+const wssEsp32Video = new WebSocketServer({ noServer: true });
+const wssFrontendVideo = new WebSocketServer({ noServer: true });
+
 let lastEsp32Ip = null;
 
 function extractRemoteIp(ws, req) {
@@ -54,6 +58,39 @@ wssFrontendAudio.on("connection", (ws) => {
   console.log(`[${new Date().toLocaleTimeString()}] Frontend audio client connected (total: ${wssFrontendAudio.clients.size})`);
   ws.on("close", () => {
     console.log(`[${new Date().toLocaleTimeString()}] Frontend audio client disconnected (total: ${wssFrontendAudio.clients.size})`);
+  });
+});
+
+// ESP32 video source → relay binary frames to all frontend video clients
+wssEsp32Video.on("connection", (ws, req) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ✅ ESP32 video source connected`);
+  extractRemoteIp(ws, req);
+  let frameCount = 0;
+  ws.on("message", (data) => {
+    frameCount++;
+    const frontendCount = wssFrontendVideo.clients.size;
+    if (frameCount <= 5 || frameCount % 100 === 0) {
+      console.log(`[${new Date().toLocaleTimeString()}] 🎥 Video frame #${frameCount} received (${data.length || data.byteLength} bytes) → relaying to ${frontendCount} frontend client(s)`);
+    }
+    wssFrontendVideo.clients.forEach((client) => {
+      // Skip clients with backed-up send buffers (>512KB queued) to prevent memory bloat
+      if (client.readyState === 1 && client.bufferedAmount < 512 * 1024) {
+        client.send(data);
+      }
+    });
+  });
+  ws.on("close", () => {
+    console.log(`[${new Date().toLocaleTimeString()}] ❌ ESP32 video source disconnected (sent ${frameCount} frames total)`);
+  });
+  ws.on("error", (err) => {
+    console.error(`[${new Date().toLocaleTimeString()}] ESP32 video WS error:`, err.message);
+  });
+});
+
+wssFrontendVideo.on("connection", (ws) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ✅ Frontend video client connected (total: ${wssFrontendVideo.clients.size})`);
+  ws.on("close", () => {
+    console.log(`[${new Date().toLocaleTimeString()}] ❌ Frontend video client disconnected (total: ${wssFrontendVideo.clients.size})`);
   });
 });
 
@@ -154,33 +191,13 @@ const server = http.createServer((req, res) => {
     res.end(
       JSON.stringify({
         ip: lastEsp32Ip,
-        streamUrl: lastEsp32Ip ? `http://${lastEsp32Ip}/stream` : null,
+        wsPort: 81,
       })
     );
     return;
   }
 
-  if (req.method === "GET" && req.url.startsWith("/api/video-proxy")) {
-    const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
-    const espIp = parsedUrl.searchParams.get("ip") || lastEsp32Ip;
-    if (!espIp) {
-      res.writeHead(503, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: "No ESP32 IP address available" }));
-      return;
-    }
-    const targetUrl = `http://${espIp}/stream`;
-    http
-      .get(targetUrl, (proxyRes) => {
-        res.writeHead(proxyRes.statusCode, proxyRes.headers);
-        proxyRes.pipe(res);
-      })
-      .on("error", (err) => {
-        console.error("Video proxy error:", err.message);
-        res.writeHead(502, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: "Failed to connect to ESP32 stream", details: err.message }));
-      });
-    return;
-  }
+
 
   if (req.url.startsWith("/api/announcement")) {
     if (req.method === "GET") {
@@ -476,6 +493,10 @@ server.on("upgrade", (req, socket, head) => {
     wssFrontendAudio.handleUpgrade(req, socket, head, (ws) => {
       wssFrontendAudio.emit("connection", ws, req);
     });
+  } else if (pathname === "/ws/live-video") {
+    wssFrontendVideo.handleUpgrade(req, socket, head, (ws) => {
+      wssFrontendVideo.emit("connection", ws, req);
+    });
   } else {
     socket.destroy();
   }
@@ -487,6 +508,10 @@ esp32Server.on("upgrade", (req, socket, head) => {
   if (pathname === "/api/audio-stream" || pathname === "/api/esp32-audio") {
     wssEsp32Audio.handleUpgrade(req, socket, head, (ws) => {
       wssEsp32Audio.emit("connection", ws, req);
+    });
+  } else if (pathname === "/ws") {
+    wssEsp32Video.handleUpgrade(req, socket, head, (ws) => {
+      wssEsp32Video.emit("connection", ws, req);
     });
   } else {
     socket.destroy();

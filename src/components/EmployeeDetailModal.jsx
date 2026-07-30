@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTelemetry } from "../context/TelemetryContext";
 import "../styles/EmployeeDetailModal.css";
-import RGB565VideoPlayer from "./RGB565VideoPlayer";
+
 const WS_HOST = window.location.hostname || "localhost";
 const WS_PORT = 8080;
 const RECONNECT_DELAY = 2000;
 const AUDIO_SAMPLE_RATE = 16000;
+
+// ESP32 QVGA RGB565 frame dimensions
+const FRAME_WIDTH = 320;
+const FRAME_HEIGHT = 240;
 
 function EmployeeDetailModal({ employee, onClose }) {
   const { getDeviceTelemetry } = useTelemetry();
@@ -40,26 +44,102 @@ function EmployeeDetailModal({ employee, onClose }) {
   const reconnectAudioRef = useRef(null);
   const mountedRef = useRef(true);
 
+  const canvasRef = useRef(null);
+  const videoWsRef = useRef(null);
+  const reconnectVideoRef = useRef(null);
+
   const [videoStatus, setVideoStatus] = useState("connecting");
   const [audioStatus, setAudioStatus] = useState("disconnected");
   const [muted, setMuted] = useState(false);
-  const [esp32Ip, setEsp32Ip] = useState(null);
 
-  // Fetch ESP32 IP from server, then point video player directly at its stream
-  useEffect(() => {
-    fetch(`http://${WS_HOST}:${WS_PORT}/api/esp32-info`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.ip) {
-          setEsp32Ip(data.ip);
-        } else {
-          setVideoStatus("disconnected");
-        }
-      })
-      .catch(() => {
-        setVideoStatus("disconnected");
-      });
+  // Connect to server's video relay WebSocket (ESP32 → server → frontend)
+  const connectVideo = useCallback(() => {
+    if (!mountedRef.current) return;
+    setVideoStatus("connecting");
+
+    const wsUrl = `ws://${WS_HOST}:${WS_PORT}/ws/live-video`;
+    console.log("[Video] Connecting to:", wsUrl);
+    const ws = new WebSocket(wsUrl);
+    ws.binaryType = "arraybuffer";
+    videoWsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("[Video] ✅ WebSocket connected");
+      if (mountedRef.current) setVideoStatus("connected");
+    };
+
+    ws.onmessage = (event) => {
+      if (!mountedRef.current) return;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      const frameData = event.data;
+      const expectedBytes = FRAME_WIDTH * FRAME_HEIGHT * 2;
+      
+      // Log first few frames and size mismatches for debugging
+      if (!ws._frameCount) ws._frameCount = 0;
+      ws._frameCount++;
+      if (ws._frameCount <= 5 || frameData.byteLength !== expectedBytes) {
+        console.log(`[Video] Frame #${ws._frameCount}: ${frameData.byteLength} bytes (expected ${expectedBytes})`);
+      }
+      
+      if (frameData.byteLength !== expectedBytes) return;
+
+      const ctx = canvas.getContext("2d");
+      const imageData = ctx.createImageData(FRAME_WIDTH, FRAME_HEIGHT);
+      const rgba = imageData.data;
+      const view = new DataView(frameData);
+
+      for (let i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++) {
+        // OV2640 outputs big-endian RGB565: [RRRRRGGG][GGGBBBBB]
+        // If colors appear swapped, change false → true for little-endian
+        const pixel = view.getUint16(i * 2, false);
+        const r5 = (pixel >> 11) & 0x1F;
+        const g6 = (pixel >> 5) & 0x3F;
+        const b5 = pixel & 0x1F;
+
+        rgba[i * 4]     = (r5 << 3) | (r5 >> 2);
+        rgba[i * 4 + 1] = (g6 << 2) | (g6 >> 4);
+        rgba[i * 4 + 2] = (b5 << 3) | (b5 >> 2);
+        rgba[i * 4 + 3] = 255;
+      }
+
+      ctx.putImageData(imageData, 0, 0);
+    };
+
+    ws.onclose = (event) => {
+      console.log(`[Video] ❌ WebSocket closed (code: ${event.code}, reason: ${event.reason})`);
+      if (!mountedRef.current) return;
+      setVideoStatus("disconnected");
+      reconnectVideoRef.current = setTimeout(connectVideo, RECONNECT_DELAY);
+    };
+
+    ws.onerror = (err) => {
+      console.error("[Video] WebSocket error:", err);
+      ws.close();
+    };
   }, []);
+
+  // Dedicated mount/unmount lifecycle — must be declared BEFORE video & audio effects
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Start video WebSocket immediately on mount
+  useEffect(() => {
+    connectVideo();
+
+    return () => {
+      clearTimeout(reconnectVideoRef.current);
+      if (videoWsRef.current) {
+        videoWsRef.current.onclose = null;
+        videoWsRef.current.close();
+      }
+    };
+  }, [connectVideo]);
 
 
   const connectAudio = useCallback(() => {
@@ -125,12 +205,9 @@ function EmployeeDetailModal({ employee, onClose }) {
   }, [muted]);
 
   useEffect(() => {
-    mountedRef.current = true;
     connectAudio();
 
     return () => {
-      mountedRef.current = false;
-
       clearTimeout(reconnectAudioRef.current);
 
       if (audioWsRef.current) {
@@ -177,27 +254,13 @@ function EmployeeDetailModal({ employee, onClose }) {
         <div className="modal-section">
           <h3>Video Feed</h3>
           <div className="video-feed-container">
-            {esp32Ip ? (
-              <>
-                <RGB565VideoPlayer
-                  primaryUrl={`http://${esp32Ip}/stream`}
-                  fallbackUrl={`http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${esp32Ip}`}
-                  className="video-feed-canvas"
-                  onConnected={() => setVideoStatus("connected")}
-                  onDisconnected={() => setVideoStatus("disconnected")}
-                />
-                {videoStatus === "connecting" && (
-                  <div className="video-feed-placeholder" style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'}}>
-                    Connecting...
-                  </div>
-                )}
-                {videoStatus === "disconnected" && (
-                  <div className="video-feed-placeholder" style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'}}>
-                    No Signal
-                  </div>
-                )}
-              </>
-            ) : (
+            <canvas
+              ref={canvasRef}
+              width={FRAME_WIDTH}
+              height={FRAME_HEIGHT}
+              className="video-feed-canvas"
+            />
+            {videoStatus !== "connected" && (
               <div className="video-feed-placeholder">
                 {videoStatus === "connecting" ? "Connecting..." : "No Signal"}
               </div>

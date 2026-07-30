@@ -20,7 +20,7 @@ function EmployeeDetailModal({ employee, onClose }) {
 
   const tempVal = liveTelemetry?.sensorData?.temperature ?? employee.sensorData?.temperature ?? "--";
   const humidityVal = liveTelemetry?.sensorData?.humidity ?? employee.sensorData?.humidity ?? "--";
-  const soundVal = employee.sensorData?.sound ?? "--";
+  const soundVal = liveTelemetry?.sensorData?.sound ?? employee.sensorData?.sound ?? "--";
 
   const gyro = liveTelemetry?.gyroData || { x: null, y: null, z: null };
   const accel = liveTelemetry?.accelData || { x: null, y: null, z: null };

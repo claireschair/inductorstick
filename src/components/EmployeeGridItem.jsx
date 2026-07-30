@@ -11,7 +11,7 @@ function EmployeeGridItem({ employee, onClick }) {
 
   const tempVal = liveTelemetry?.sensorData?.temperature ?? sensorData?.temperature ?? "--";
   const humidityVal = liveTelemetry?.sensorData?.humidity ?? sensorData?.humidity ?? "--";
-  const soundVal = sensorData?.sound ?? "--";
+  const soundVal = liveTelemetry?.sensorData?.sound ?? sensorData?.sound ?? "--";
 
   const formatLastReceived = (updatedAt) => {
     if (!updatedAt) return lastCheckIn || "N/A";

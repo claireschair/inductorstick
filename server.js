@@ -4,12 +4,10 @@ import { WebSocketServer } from "ws";
 import { initializeApp } from "firebase/app";
 import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection } from "firebase/firestore";
 
-// --- Server Ports ---
-const PORT_NANO = 8080;          // Frontend API & Telemetry
-const PORT_ESP32_VIDEO = 6767;   // Camera Ingest
-const PORT_ESP32_AUDIO = 8081;   // Microphone Ingest
+const PORT_NANO = 8080;
+const PORT_ESP32_VIDEO = 6767;
+const PORT_ESP32_AUDIO = 8081;
 
-// --- Firebase Configuration ---
 const firebaseConfig = {
   apiKey: "AIzaSyDGOR3kDdKOXmOX9Zif09-ZPzoBRDAcSnI",
   authDomain: "inductor-stick.firebaseapp.com",
@@ -23,7 +21,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// --- WebSocket Instances ---
 const wssEsp32Audio = new WebSocketServer({ noServer: true });
 const wssFrontendAudio = new WebSocketServer({ noServer: true });
 
@@ -42,11 +39,10 @@ function extractRemoteIp(ws, req) {
   }
 }
 
-// --- Audio WebSocket Relay (Mic Port 8081 -> Frontend Port 8080) ---
 wssEsp32Audio.on("connection", (ws, req) => {
   ws.on("message", (data) => {
     wssFrontendAudio.clients.forEach((client) => {
-      // Only send if the client socket buffer isn't backlogged (> 256 KB)
+
       if (client.readyState === 1 && client.bufferedAmount < 256 * 1024) {
         client.send(data);
       }
@@ -61,7 +57,6 @@ wssFrontendAudio.on("connection", (ws) => {
   });
 });
 
-// --- Video WebSocket Relay (Camera Port 6767 -> Frontend Port 8080) ---
 wssEsp32Video.on("connection", (ws, req) => {
   console.log(`[${new Date().toLocaleTimeString()}] 🎥 ESP32 camera connected on port ${PORT_ESP32_VIDEO}`);
   extractRemoteIp(ws, req);
@@ -93,7 +88,6 @@ wssFrontendVideo.on("connection", (ws) => {
   });
 });
 
-// --- Firestore Watchers ---
 let currentAnnouncement = "";
 let userCompanyMap = {};
 let userNameMap = {};
@@ -162,7 +156,6 @@ onSnapshot(
   (err) => console.error("Error watching companies collection:", err.message)
 );
 
-// --- HTTP Server: Nano + Frontend (Port 8080) ---
 const server = http.createServer((req, res) => {
   console.log(`[${new Date().toLocaleTimeString()}] HTTP ${req.method} ${req.url} from ${req.socket.remoteAddress}`);
 
@@ -176,7 +169,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // --- ESP32 Info Endpoint ---
   if (req.method === "GET" && req.url.startsWith("/api/esp32-info")) {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(
@@ -189,7 +181,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // --- HTTP Video Stream Proxy Fallback ---
   if (req.method === "GET" && req.url.startsWith("/api/video-proxy")) {
     const parsedUrl = new URL(req.url, `http://${req.headers.host}`);
     const espIp = parsedUrl.searchParams.get("ip") || lastEsp32Ip;
@@ -212,7 +203,6 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // --- Announcements Endpoint ---
   if (req.url.startsWith("/api/announcement")) {
     if (req.method === "GET") {
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -254,7 +244,6 @@ const server = http.createServer((req, res) => {
     }
   }
 
-  // --- Ingest Telemetry Data ---
   if (req.method === "POST" && req.url.startsWith("/api/data")) {
     let body = "";
     req.on("data", (chunk) => { body += chunk.toString(); });
@@ -397,21 +386,18 @@ const server = http.createServer((req, res) => {
   res.end(JSON.stringify({ error: "Not found" }));
 });
 
-// --- HTTP Server: ESP32 Video Ingest (Port 6767) ---
 const esp32VideoServer = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ status: "ESP32 Video Ingest Server Active", port: PORT_ESP32_VIDEO }));
 });
 
-// --- HTTP Server: ESP32 Audio / Mic Ingest (Port 8081) ---
 const esp32AudioServer = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.writeHead(200, { "Content-Type": "application/json" });
   res.end(JSON.stringify({ status: "ESP32 Audio Ingest Server Active", port: PORT_ESP32_AUDIO }));
 });
 
-// --- Start HTTP Listeners ---
 server.listen(PORT_NANO, "0.0.0.0", () => {
   console.log(`[Nano + Frontend] Server running on 0.0.0.0:${PORT_NANO}`);
 });
@@ -424,9 +410,6 @@ esp32AudioServer.listen(PORT_ESP32_AUDIO, "0.0.0.0", () => {
   console.log(`[ESP32 Audio Ingest] Server running on 0.0.0.0:${PORT_ESP32_AUDIO}`);
 });
 
-// --- WebSocket Upgrade Handlers ---
-
-// 1. Port 8080: Frontend Connections
 server.on("upgrade", (req, socket, head) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
@@ -443,7 +426,6 @@ server.on("upgrade", (req, socket, head) => {
   }
 });
 
-// 2. Port 6767: ESP32 Video Source Ingest
 esp32VideoServer.on("upgrade", (req, socket, head) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 
@@ -456,7 +438,6 @@ esp32VideoServer.on("upgrade", (req, socket, head) => {
   }
 });
 
-// 3. Port 8081: Microphone / Audio Hardware Source Ingest
 esp32AudioServer.on("upgrade", (req, socket, head) => {
   const pathname = new URL(req.url, `http://${req.headers.host}`).pathname;
 

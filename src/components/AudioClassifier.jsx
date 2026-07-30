@@ -14,14 +14,15 @@ export default function AudioClassifier() {
   const lastAlertTimeRef = useRef(0);
 
   const ALERT_COOLDOWN_MS = 10000;
-  const INFERENCE_INTERVAL_MS = 1000; // Throttle inference to max 1 per second
-  const WINDOW_SIZE = 44032; // Number of samples per ML window
+  const INFERENCE_INTERVAL_MS = 1000;
+  const WINDOW_SIZE = 44032;
   const DEVICE_ID = "2";
 
   const connectHardwareStream = () => {
-    console.log(`[${new Date().toLocaleTimeString()}] 🔌 Connecting to live audio WebSocket: ws://localhost:8080/ws/live-audio...`);
+    const host = window.location.hostname || "localhost";
+    console.log(`[${new Date().toLocaleTimeString()}] 🔌 Connecting to live audio WebSocket: ws://${host}:8080/ws/live-audio...`);
 
-    const ws = new WebSocket("ws://localhost:8080/ws/live-audio");
+    const ws = new WebSocket(`ws://${host}:8080/ws/live-audio`);
     ws.binaryType = "arraybuffer";
 
     ws.onopen = () => {
@@ -31,7 +32,7 @@ export default function AudioClassifier() {
 
     ws.onmessage = async (event) => {
       if (event.data instanceof ArrayBuffer) {
-        // Validate Float32 byte alignment to prevent sound glitching
+
         if (event.data.byteLength % 4 !== 0) {
           console.warn(`[${new Date().toLocaleTimeString()}] Dropped packet: Byte length (${event.data.byteLength}) is not Float32 aligned.`);
           return;
@@ -39,8 +40,7 @@ export default function AudioClassifier() {
 
         const incomingPCM = new Float32Array(event.data);
         const currentBuffer = audioBufferRef.current;
-        
-        // Append incoming stream chunk to current buffer
+
         const nextBuffer = new Float32Array(currentBuffer.length + incomingPCM.length);
         nextBuffer.set(currentBuffer);
         nextBuffer.set(incomingPCM, currentBuffer.length);
@@ -48,7 +48,6 @@ export default function AudioClassifier() {
 
         const now = Date.now();
 
-        // Check if buffer has reached the window size and throttle delay has passed
         if (
           audioBufferRef.current.length >= WINDOW_SIZE &&
           !isProcessingRef.current &&
@@ -61,12 +60,11 @@ export default function AudioClassifier() {
           const len = audioBufferRef.current.length;
           const inferenceWindow = audioBufferRef.current.subarray(len - WINDOW_SIZE, len);
 
-          // Retain overlapping samples for seamless streaming
           audioBufferRef.current = audioBufferRef.current.subarray(len - (WINDOW_SIZE / 2));
 
           await runInference(inferenceWindow);
         } else if (audioBufferRef.current.length > WINDOW_SIZE * 2) {
-          // Prevent memory leaks if inference lags behind
+
           console.warn(`[${new Date().toLocaleTimeString()}] Audio buffer overflow detected! Pruning backlog...`);
           audioBufferRef.current = audioBufferRef.current.subarray(audioBufferRef.current.length - WINDOW_SIZE);
         }
@@ -107,7 +105,7 @@ export default function AudioClassifier() {
 
     try {
       console.log(`[${new Date().toLocaleTimeString()}] Target class matched! Writing check-in alert to Firestore for Device #${DEVICE_ID}...`);
-      
+
       await setDoc(doc(db, "alerts", DEVICE_ID), {
         deviceId: Number(DEVICE_ID),
         status: "checkin",
@@ -126,7 +124,8 @@ export default function AudioClassifier() {
     const startTime = performance.now();
 
     try {
-      const response = await fetch("http://localhost:5001/predict", {
+      const host = window.location.hostname || "localhost";
+      const response = await fetch(`http://${host}:5001/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/octet-stream" },
         body: pcmWindow.buffer,
@@ -157,7 +156,8 @@ export default function AudioClassifier() {
         console.error(`[${new Date().toLocaleTimeString()}] ML server returned HTTP status: ${response.status}`);
       }
     } catch (err) {
-      console.error(`[${new Date().toLocaleTimeString()}] Error communicating with ML server on http://localhost:5001/predict:`, err);
+      const host = window.location.hostname || "localhost";
+      console.error(`[${new Date().toLocaleTimeString()}] Error communicating with ML server on http://${host}:5001/predict:`, err);
     } finally {
       isProcessingRef.current = false;
     }
@@ -172,7 +172,7 @@ export default function AudioClassifier() {
   return (
     <div style={{ padding: "2rem", maxWidth: "500px", margin: "2rem auto", border: "1px solid #ccc", borderRadius: "8px" }}>
       <h2>Hardware Audio Stream Monitor</h2>
-      <button 
+      <button
         onClick={isConnected ? disconnectHardwareStream : connectHardwareStream}
         style={{
           padding: "0.75rem 1.5rem",

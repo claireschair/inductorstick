@@ -13,13 +13,13 @@ export default function AudioTest() {
     try {
       setStatus("Connecting to audio ingest server on port 8081...");
 
-      const ws = new WebSocket("ws://localhost:8081/api/esp32-audio");
+      const host = window.location.hostname || "localhost";
+      const ws = new WebSocket(`ws://${host}:8081/api/esp32-audio`);
       ws.binaryType = "arraybuffer";
 
       ws.onopen = async () => {
         setStatus("Connected. Requesting browser microphone access...");
 
-        // Request browser microphone permissions
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         streamRef.current = stream;
 
@@ -31,11 +31,8 @@ export default function AudioTest() {
         const processor = audioContext.createScriptProcessor(1024, 1, 1);
         processorRef.current = processor;
 
-        // --- Speaker Feedback Fix ---
-        // Route audio through a zero-gain node so the audio processing loop 
-        // stays active without playing mic audio out of your laptop speakers.
         const gainNode = audioContext.createGain();
-        gainNode.gain.value = 0; 
+        gainNode.gain.value = 0;
 
         processor.onaudioprocess = (e) => {
           if (ws.readyState === WebSocket.OPEN) {
@@ -45,7 +42,6 @@ export default function AudioTest() {
           }
         };
 
-        // Connect graph: Source -> Processor -> Muted Gain -> Destination Speakers
         source.connect(processor);
         processor.connect(gainNode);
         gainNode.connect(audioContext.destination);
@@ -87,7 +83,7 @@ export default function AudioTest() {
         Captures audio from your browser microphone and streams it as Float32 PCM to Port 8081 to emulate an ESP32 hardware microphone node.
       </p>
 
-      <button 
+      <button
         onClick={isSimulating ? stopEmulation : startEmulation}
         style={{
           padding: "0.75rem 1.5rem",

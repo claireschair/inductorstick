@@ -19,8 +19,8 @@ function App() {
 
   return (
     <div className="app-container">
-      {location.pathname !== "/larp" && 
-       location.pathname !== "/test-audio" && 
+      {location.pathname !== "/larp" &&
+       location.pathname !== "/test-audio" &&
        location.pathname !== "/audio-monitor" && <Navbar />}
 
       <SupervisorAlertBanner />

@@ -7,7 +7,6 @@ const WS_PORT = 8080;
 const RECONNECT_DELAY = 2000;
 const AUDIO_SAMPLE_RATE = 16000;
 
-// ESP32 QVGA RGB565 frame dimensions
 const FRAME_WIDTH = 320;
 const FRAME_HEIGHT = 240;
 
@@ -52,7 +51,6 @@ function EmployeeDetailModal({ employee, onClose }) {
   const [audioStatus, setAudioStatus] = useState("disconnected");
   const [muted, setMuted] = useState(false);
 
-  // Connect to server's video relay WebSocket (ESP32 → server → frontend)
   const connectVideo = useCallback(() => {
     if (!mountedRef.current) return;
     setVideoStatus("connecting");
@@ -75,14 +73,13 @@ function EmployeeDetailModal({ employee, onClose }) {
 
       const frameData = event.data;
       const expectedBytes = FRAME_WIDTH * FRAME_HEIGHT * 2;
-      
-      // Log first few frames and size mismatches for debugging
+
       if (!ws._frameCount) ws._frameCount = 0;
       ws._frameCount++;
       if (ws._frameCount <= 5 || frameData.byteLength !== expectedBytes) {
         console.log(`[Video] Frame #${ws._frameCount}: ${frameData.byteLength} bytes (expected ${expectedBytes})`);
       }
-      
+
       if (frameData.byteLength !== expectedBytes) return;
 
       const ctx = canvas.getContext("2d");
@@ -91,8 +88,7 @@ function EmployeeDetailModal({ employee, onClose }) {
       const view = new DataView(frameData);
 
       for (let i = 0; i < FRAME_WIDTH * FRAME_HEIGHT; i++) {
-        // OV2640 outputs big-endian RGB565: [RRRRRGGG][GGGBBBBB]
-        // If colors appear swapped, change false → true for little-endian
+
         const pixel = view.getUint16(i * 2, false);
         const r5 = (pixel >> 11) & 0x1F;
         const g6 = (pixel >> 5) & 0x3F;
@@ -120,7 +116,6 @@ function EmployeeDetailModal({ employee, onClose }) {
     };
   }, []);
 
-  // Dedicated mount/unmount lifecycle — must be declared BEFORE video & audio effects
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -128,7 +123,6 @@ function EmployeeDetailModal({ employee, onClose }) {
     };
   }, []);
 
-  // Start video WebSocket immediately on mount
   useEffect(() => {
     connectVideo();
 
@@ -140,7 +134,6 @@ function EmployeeDetailModal({ employee, onClose }) {
       }
     };
   }, [connectVideo]);
-
 
   const connectAudio = useCallback(() => {
     if (!mountedRef.current) return;
@@ -219,7 +212,7 @@ function EmployeeDetailModal({ employee, onClose }) {
         audioCtxRef.current = null;
       }
     };
-  }, []); 
+  }, []);
 
   useEffect(() => {
     if (muted && audioCtxRef.current) {

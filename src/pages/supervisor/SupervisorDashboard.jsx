@@ -118,7 +118,8 @@ function SupervisorDashboard() {
       );
 
       try {
-        await fetch("http://localhost:8080/api/announcement", {
+        const host = window.location.hostname || "localhost";
+        await fetch(`http://${host}:8080/api/announcement`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ announcement: textToPush }),
@@ -188,7 +189,6 @@ function SupervisorDashboard() {
 
   const activeEmployees = employeesWithSessionData.filter((employee) => employee.checkedIn);
   const inactiveEmployees = employeesWithSessionData.filter((employee) => !employee.checkedIn);
-
 
   return (
     <div className="supervisor-page">

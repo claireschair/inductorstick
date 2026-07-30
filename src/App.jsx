@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
 import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
 import WorkerDashboard from "./pages/worker/WorkerDashboard";
 import Login from "./pages/auth/Login";
@@ -8,16 +9,12 @@ import Signup from "./pages/auth/Signup";
 import Settings from "./pages/settings/Settings";
 import Profile from "./pages/Profile";
 import Larp from "./pages/Larp";
-import { useAuth } from "./context/AuthContext";
 import SupervisorAlertBanner from "./components/SupervisorAlertBanner";
 import "./styles/App.css";
-import AudioTest from './components/AudioTest'; //uncommitted
 import AudioClassifier from "./components/AudioClassifier";
 
 function App() {
   const location = useLocation();
-  const hideLayoutPaths = ["/login", "/signup", "/larp", "/test-audio"];
-  const shouldShowLayout = !hideLayoutPaths.includes(location.pathname);
 
   return (
     <div className="app-container">
@@ -25,12 +22,10 @@ function App() {
       {location.pathname !== "/larp" && location.pathname !== "/test-audio" && <Navbar />}
       
       <SupervisorAlertBanner />
-      
-      {/* Renders only on core app views */}
-      {shouldShowLayout && <AudioClassifier />}
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/supervisor/dashboard" element={<SupervisorDashboard />} />
         <Route path="/worker/dashboard" element={<WorkerDashboard />} />
         <Route path="/settings" element={<Settings />} />
@@ -40,7 +35,7 @@ function App() {
         <Route path="/larp" element={<Larp />} />
         
         {/*register new route*/}
-        <Route path="/test-audio" element={<AudioTest />} />
+        <Route path="/test-audio" element={<AudioClassifier />} />
       </Routes>
     </div>
   );

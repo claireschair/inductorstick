@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTelemetry } from "../context/TelemetryContext";
 import "../styles/EmployeeDetailModal.css";
-import RGB565VideoPlayer from "./RGB565VideoPlayer";
+
 const WS_HOST = window.location.hostname || "localhost";
 const WS_PORT = 8080;
 const RECONNECT_DELAY = 2000;
@@ -44,14 +44,66 @@ function EmployeeDetailModal({ employee, onClose }) {
   const [audioStatus, setAudioStatus] = useState("disconnected");
   const [muted, setMuted] = useState(false);
   const [esp32Ip, setEsp32Ip] = useState(null);
+  const [mjpegUrl, setMjpegUrl] = useState(null);
+  
+  const canvasRef = useRef(null);
 
-  // Fetch ESP32 IP from server, then point video player directly at its stream
+  const drawRGB565 = useCallback((frameData) => {
+    if (!canvasRef.current) return;
+    let width = 0;
+    let height = 0;
+    
+    // Auto-detect resolution based on frame length
+    if (frameData.length === 640 * 480 * 2) {
+      width = 640; height = 480;
+    } else if (frameData.length === 320 * 240 * 2) {
+      width = 320; height = 240;
+    } else if (frameData.length === 160 * 120 * 2) {
+      width = 160; height = 120;
+    } else {
+      // Guess dimensions if unknown
+      const totalPixels = frameData.length / 2;
+      width = Math.floor(Math.sqrt(totalPixels * (4/3)));
+      height = Math.floor(width * 0.75);
+    }
+
+    if (width === 0 || height === 0) return;
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (canvas.width !== width) canvas.width = width;
+    if (canvas.height !== height) canvas.height = height;
+
+    const imageData = ctx.createImageData(width, height);
+    const data = imageData.data;
+
+    let j = 0;
+    for (let i = 0; i < frameData.length; i += 2) {
+      // High byte first (ESP32 standard)
+      const rgb = (frameData[i] << 8) | frameData[i+1];
+      
+      const r = (rgb >> 11) & 0x1F;
+      const g = (rgb >> 5) & 0x3F;
+      const b = rgb & 0x1F;
+
+      data[j++] = (r << 3) | (r >> 2);
+      data[j++] = (g << 2) | (g >> 4);
+      data[j++] = (b << 3) | (b >> 2);
+      data[j++] = 255;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+  }, []);
+
+  // Fetch ESP32 IP from server, then point at its stream
   useEffect(() => {
     fetch(`http://${WS_HOST}:${WS_PORT}/api/esp32-info`)
       .then((res) => res.json())
       .then((data) => {
         if (data.ip) {
           setEsp32Ip(data.ip);
+          // Point directly at the ESP32's own stream
+          setMjpegUrl(`http://${data.ip}/stream`);
         } else {
           setVideoStatus("disconnected");
         }
@@ -60,6 +112,138 @@ function EmployeeDetailModal({ employee, onClose }) {
         setVideoStatus("disconnected");
       });
   }, []);
+
+  useEffect(() => {
+    if (!mjpegUrl) return;
+
+    let active = true;
+    const controller = new AbortController();
+
+    async function fetchStream() {
+      try {
+        setVideoStatus("connecting");
+        let urlToFetch = mjpegUrl;
+        let response;
+        
+        try {
+          response = await fetch(urlToFetch, { signal: controller.signal });
+          if (!response.ok) throw new Error("HTTP error");
+        } catch (e) {
+          if (e.name === 'AbortError') throw e;
+          // Fallback to proxy if direct fetch fails (CORS, network error)
+          if (esp32Ip && !urlToFetch.includes("video-proxy")) {
+            urlToFetch = `http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${esp32Ip}`;
+            response = await fetch(urlToFetch, { signal: controller.signal });
+          } else {
+            throw e;
+          }
+        }
+
+        if (!response.body) {
+           setVideoStatus("disconnected");
+           return;
+        }
+
+        const reader = response.body.getReader();
+        let chunks = [];
+        let totalLength = 0;
+
+        const boundary = "\r\n--Insert_Picture_Of_Ainsely_Giggling_Here\r\n";
+        const encoder = new TextEncoder();
+        const boundaryBytes = encoder.encode(boundary);
+
+        const getBuffer = () => {
+           const buf = new Uint8Array(totalLength);
+           let offset = 0;
+           for (const chunk of chunks) {
+              buf.set(chunk, offset);
+              offset += chunk.length;
+           }
+           return buf;
+        };
+
+        const indexOf = (arr, search, start = 0) => {
+            if (search.length === 0) return -1;
+            const first = search[0];
+            const max = arr.length - search.length;
+            for (let i = start; i <= max; i++) {
+                if (arr[i] === first) {
+                    let found = true;
+                    for (let j = 1; j < search.length; j++) {
+                        if (arr[i + j] !== search[j]) {
+                            found = false;
+                            break;
+                        }
+                    }
+                    if (found) return i;
+                }
+            }
+            return -1;
+        };
+
+        setVideoStatus("connected");
+
+        while (active) {
+          const { value, done } = await reader.read();
+          if (done) break;
+
+          chunks.push(value);
+          totalLength += value.length;
+
+          let buffer = getBuffer();
+          let processedBytes = 0;
+
+          while (true) {
+             const boundaryIdx = indexOf(buffer, boundaryBytes, processedBytes);
+             if (boundaryIdx === -1) break;
+
+             const headerEndIdx = indexOf(buffer, encoder.encode("\r\n\r\n"), boundaryIdx);
+             if (headerEndIdx === -1) break;
+
+             const headersBlock = buffer.slice(boundaryIdx + boundaryBytes.length, headerEndIdx);
+             const headersText = new TextDecoder().decode(headersBlock);
+             const contentLengthMatch = headersText.match(/Content-Length:\s*(\d+)/i);
+
+             if (!contentLengthMatch) {
+                 processedBytes = boundaryIdx + boundaryBytes.length;
+                 continue;
+             }
+
+             const contentLength = parseInt(contentLengthMatch[1], 10);
+             const frameStart = headerEndIdx + 4;
+             const frameEnd = frameStart + contentLength;
+
+             if (buffer.length < frameEnd) {
+                 break; 
+             }
+
+             const frameData = buffer.slice(frameStart, frameEnd);
+             drawRGB565(frameData);
+
+             processedBytes = frameEnd;
+          }
+
+          if (processedBytes > 0) {
+             const remaining = buffer.slice(processedBytes);
+             chunks = [remaining];
+             totalLength = remaining.length;
+          }
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error("Stream error:", err);
+          setVideoStatus("disconnected");
+        }
+      }
+    }
+    
+    fetchStream();
+    
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [mjpegUrl, esp32Ip, drawRGB565]);
 
 
   const connectAudio = useCallback(() => {
@@ -177,27 +361,12 @@ function EmployeeDetailModal({ employee, onClose }) {
         <div className="modal-section">
           <h3>Video Feed</h3>
           <div className="video-feed-container">
-            {esp32Ip ? (
-              <>
-                <RGB565VideoPlayer
-                  primaryUrl={`http://${esp32Ip}/stream`}
-                  fallbackUrl={`http://${WS_HOST}:${WS_PORT}/api/video-proxy?ip=${esp32Ip}`}
-                  className="video-feed-canvas"
-                  onConnected={() => setVideoStatus("connected")}
-                  onDisconnected={() => setVideoStatus("disconnected")}
-                />
-                {videoStatus === "connecting" && (
-                  <div className="video-feed-placeholder" style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'}}>
-                    Connecting...
-                  </div>
-                )}
-                {videoStatus === "disconnected" && (
-                  <div className="video-feed-placeholder" style={{position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)'}}>
-                    No Signal
-                  </div>
-                )}
-              </>
-            ) : (
+            <canvas
+              ref={canvasRef}
+              className="video-feed-canvas"
+              style={{ width: "100%", height: "auto", display: videoStatus === "connected" ? "block" : "none" }}
+            />
+            {videoStatus !== "connected" && (
               <div className="video-feed-placeholder">
                 {videoStatus === "connecting" ? "Connecting..." : "No Signal"}
               </div>

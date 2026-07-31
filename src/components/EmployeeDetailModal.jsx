@@ -272,7 +272,7 @@ function EmployeeDetailModal({ employee, onClose }) {
           <div className="modal-sensor-grid">
             <div className="sensor-stat">
               <span className="sensor-label">Temp</span>
-              <span className="sensor-value">{tempVal}°F</span>
+              <span className="sensor-value">{tempVal}°C</span>
             </div>
             <div className="sensor-stat">
               <span className="sensor-label">Humidity</span>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
+import "../styles/AudioMonitor.css";
 
 export default function AudioClassifier() {
   const [isConnected, setIsConnected] = useState(false);
@@ -223,50 +224,56 @@ export default function AudioClassifier() {
   }, []);
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "520px", margin: "2rem auto", border: "1px solid #333", borderRadius: "10px", backgroundColor: "#121212", color: "#fff", fontFamily: "sans-serif" }}>
-      <h2 style={{ margin: "0 0 1rem 0", fontSize: "1.35rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        <span>🎙️</span> Device Audio Ingest & Explosion Classifier
-      </h2>
-      <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: "1.5rem" }}>
-        Active microphone sensor feeding sound decibels to Nano LCD display and running real-time AI explosion detection.
-      </p>
+    <div className="audio-monitor-container">
+      <div className="audio-monitor-card">
+        <h2 className="audio-monitor-title">
+          Harware Audio Stream
+        </h2>
 
-      <button
-        onClick={isConnected ? stopAudioIngest : startAudioIngest}
-        style={{
-          padding: "0.75rem 1.5rem",
-          backgroundColor: isConnected ? "#d9534f" : "#0275d8",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontWeight: "bold",
-          width: "100%",
-          fontSize: "0.95rem"
-        }}
-      >
-        {isConnected ? "Disable Microphone Stream" : "Enable Microphone Stream"}
-      </button>
+        <button
+          onClick={isConnected ? stopAudioIngest : startAudioIngest}
+          className={`audio-btn ${isConnected ? "audio-btn-danger" : "audio-btn-primary"}`}
+        >
+          {isConnected ? "Disable Microphone Stream" : "Enable Microphone Stream"}
+        </button>
 
-      <div style={{ marginTop: "1.5rem", backgroundColor: "#1e1e1e", padding: "1rem", borderRadius: "8px" }}>
-        <p style={{ margin: "0.4rem 0" }}>Status: <strong style={{ color: isConnected ? "#4caf50" : "#ff9800" }}>{isConnected ? "Microphone Ingest Active" : "Offline"}</strong></p>
-
-        <div style={{ margin: "0.8rem 0" }}>
-          <p style={{ margin: "0 0 0.4rem 0", fontSize: "0.9rem" }}>Sound Level: <strong>{currentDecibels} dB</strong></p>
-          <div style={{ width: "100%", height: "10px", backgroundColor: "#333", borderRadius: "5px", overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${Math.min(100, Math.max(0, (currentDecibels - 30) * 1.25))}%`,
-                height: "100%",
-                backgroundColor: currentDecibels > 85 ? "#f44336" : currentDecibels > 70 ? "#ff9800" : "#4caf50",
-                transition: "width 0.15s ease"
-              }}
-            />
+        <div className="audio-monitor-panel">
+          <div className="audio-info-row">
+            <span className="audio-info-label">Status</span>
+            <span className="audio-info-value">
+              {isConnected ? "Active" : "Offline"}
+            </span>
           </div>
-        </div>
 
-        <p style={{ margin: "0.4rem 0" }}>Detected Classification: <strong>{prediction}</strong></p>
-        {confidence && <p style={{ margin: "0.4rem 0" }}>Confidence Score: <strong>{confidence}%</strong></p>}
+          <div className="decibel-section">
+            <div className="decibel-header">
+              <span className="audio-info-label">Sound Level</span>
+              <span className="audio-info-value">{currentDecibels} dB</span>
+            </div>
+            <div className="decibel-bar-track">
+              <div
+                className={`decibel-bar-fill ${
+                  currentDecibels > 85 ? "decibel-high" : currentDecibels > 70 ? "decibel-medium" : "decibel-low"
+                }`}
+                style={{
+                  width: `${Math.min(100, Math.max(0, (currentDecibels - 30) * 1.25))}%`,
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="audio-info-row">
+            <span className="audio-info-label">Detected Classification</span>
+            <span className="audio-info-value">{prediction}</span>
+          </div>
+
+          {confidence && (
+            <div className="audio-info-row">
+              <span className="audio-info-label">Confidence Score</span>
+              <span className="audio-info-value">{confidence}%</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

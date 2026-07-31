@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import "../styles/AudioMonitor.css";
 
 export default function AudioTest() {
   const [isSimulating, setIsSimulating] = useState(false);
@@ -77,31 +78,26 @@ export default function AudioTest() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "500px", margin: "2rem auto", border: "1px solid #ccc", borderRadius: "8px" }}>
-      <h2>Hardware Audio Stream Emulator</h2>
-      <p style={{ fontSize: "0.88rem", color: "#666" }}>
-        Captures audio from your browser microphone and streams it as Float32 PCM to Port 8081 to emulate an ESP32 hardware microphone node.
-      </p>
+    <div className="audio-monitor-container">
+      <div className="audio-monitor-card">
+        <h2 className="audio-monitor-title">Hardware Audio Stream Emulator</h2>
+        <p className="audio-monitor-subtitle">
+          Captures audio from your browser microphone and streams it as Float32 PCM to Port 8081 to emulate an ESP32 hardware microphone node.
+        </p>
 
-      <button
-        onClick={isSimulating ? stopEmulation : startEmulation}
-        style={{
-          padding: "0.75rem 1.5rem",
-          backgroundColor: isSimulating ? "#d9534f" : "#0275d8",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-          fontWeight: "bold",
-          width: "100%",
-          marginTop: "1rem"
-        }}
-      >
-        {isSimulating ? "Stop Transmission" : "Start Transmitting Mic Data"}
-      </button>
+        <button
+          onClick={isSimulating ? stopEmulation : startEmulation}
+          className={`audio-btn ${isSimulating ? "audio-btn-danger" : "audio-btn-primary"}`}
+        >
+          {isSimulating ? "Stop Transmission" : "Start Transmitting Mic Data"}
+        </button>
 
-      <div style={{ marginTop: "1.5rem" }}>
-        <p>Status: <strong>{status}</strong></p>
+        <div className="audio-monitor-panel">
+          <div className="audio-info-row">
+            <span className="audio-info-label">Status</span>
+            <span className="audio-info-value">{status}</span>
+          </div>
+        </div>
       </div>
     </div>
   );

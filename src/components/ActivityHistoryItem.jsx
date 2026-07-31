@@ -24,7 +24,7 @@ function ActivityHistoryItem({ session, onClick }) {
       <div className="sensor-readings">
         <div className="sensor-stat">
           <span className="sensor-label">Avg Temp</span>
-          <span className="sensor-value">{sensorSummary?.avgTemp ?? "--"}°F</span>
+          <span className="sensor-value">{sensorSummary?.avgTemp ?? "--"}°C</span>
         </div>
         <div className="sensor-stat">
           <span className="sensor-label">Avg Humidity</span>

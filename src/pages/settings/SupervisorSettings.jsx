@@ -137,7 +137,7 @@ function SupervisorSettings() {
         <h2>Sensor Thresholds</h2>
         <form onSubmit={handleSaveThresholds} className="threshold-grid">
           <div className="threshold-field">
-            <label htmlFor="temp-max">Max Safe Temp (°F)</label>
+            <label htmlFor="temp-max">Max Safe Temp (°C)</label>
             <input
               id="temp-max"
               type="number"
@@ -147,7 +147,7 @@ function SupervisorSettings() {
             />
           </div>
           <div className="threshold-field">
-            <label htmlFor="temp-min">Min Safe Temp (°F)</label>
+            <label htmlFor="temp-min">Min Safe Temp (°C)</label>
             <input
               id="temp-min"
               type="number"

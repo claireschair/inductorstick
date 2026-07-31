@@ -50,7 +50,7 @@ function SessionDetailModal({ session, onClose }) {
           <div className="modal-sensor-grid">
             <div className="sensor-stat">
               <span className="sensor-label">Avg Temp</span>
-              <span className="sensor-value">{sensorSummary?.avgTemp ?? "--"}°F</span>
+              <span className="sensor-value">{sensorSummary?.avgTemp ?? "--"}°C</span>
             </div>
             <div className="sensor-stat">
               <span className="sensor-label">Avg Humidity</span>
@@ -80,7 +80,7 @@ function SessionDetailModal({ session, onClose }) {
                   {minuteData.map((m, idx) => (
                     <tr key={idx} style={{ borderBottom: "1px solid #f0f0f0" }}>
                       <td style={{ padding: "4px" }}>{m.timeDisplay || `Min ${idx + 1}`}</td>
-                      <td style={{ padding: "4px" }}>{m.avgTemp}°F</td>
+                      <td style={{ padding: "4px" }}>{m.avgTemp}°C</td>
                       <td style={{ padding: "4px" }}>{m.avgHumidity}%</td>
                       <td style={{ padding: "4px" }}>{m.maxSound} dB</td>
                     </tr>

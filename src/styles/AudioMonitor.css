@@ -1,0 +1,124 @@
+.audio-monitor-container {
+  max-width: 600px;
+  margin: 2.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.audio-monitor-card {
+  background: #ffffff;
+  border: 1.25px solid var(--color-secondary, #51657f);
+  border-radius: 0;
+  padding: 1.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.audio-monitor-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text, #2a374a);
+  margin: 0 0 0.5rem 0;
+  border-bottom: 1px solid var(--color-bg, #e8eef5);
+  padding-bottom: 0.75rem;
+}
+
+.audio-monitor-subtitle {
+  font-size: 0.88rem;
+  color: var(--color-secondary, #51657f);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.45;
+}
+
+.audio-btn {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  color: #ffffff;
+  border-radius: 0;
+  font-family: inherit;
+  box-shadow: none !important;
+}
+
+.audio-btn-primary {
+  background: var(--color-primary, #4873a0);
+}
+
+.audio-btn-primary:hover {
+  background: #395c82;
+}
+
+.audio-btn-danger {
+  background: var(--color-danger, #c05656);
+}
+
+.audio-btn-danger:hover {
+  background: #a44343;
+}
+
+.audio-monitor-panel {
+  margin-top: 1.5rem;
+  background: var(--color-bg, #e8eef5);
+  border: 1px solid var(--color-secondary, #51657f);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.audio-info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--color-text, #2a374a);
+}
+
+.audio-info-label {
+  font-weight: 600;
+  color: var(--color-secondary, #51657f);
+}
+
+.audio-info-value {
+  font-weight: 700;
+  font-family: var(--font-mono, 'Raleway', sans-serif);
+}
+
+.decibel-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.decibel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.decibel-bar-track {
+  width: 100%;
+  height: 10px;
+  background: #ffffff;
+  border: 1px solid var(--color-secondary, #51657f);
+  overflow: hidden;
+}
+
+.decibel-bar-fill {
+  height: 100%;
+  transition: width 0.15s ease, background-color 0.15s ease;
+}
+
+.decibel-low {
+  background-color: var(--color-success, #3d8b5f);
+}
+
+.decibel-medium {
+  background-color: var(--color-accent, #a96a3d);
+}
+
+.decibel-high {
+  background-color: var(--color-danger, #c05656);
+}

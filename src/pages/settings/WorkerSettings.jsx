@@ -102,11 +102,11 @@ function WorkerSettings() {
         <div className="threshold-readonly-grid">
           <div className="threshold-stat-box">
             <span className="stat-box-label">Max Temperature</span>
-            <span className="stat-box-value">{thresholds.tempMax}°F</span>
+            <span className="stat-box-value">{thresholds.tempMax}°C</span>
           </div>
           <div className="threshold-stat-box">
             <span className="stat-box-label">Min Temperature</span>
-            <span className="stat-box-value">{thresholds.tempMin}°F</span>
+            <span className="stat-box-value">{thresholds.tempMin}°C</span>
           </div>
           <div className="threshold-stat-box">
             <span className="stat-box-label">Sound Limit</span>

@@ -1,3 +1,4 @@
+import sessionVideoAsset from "../media/Video Project 2.mp4";
 import "../styles/EmployeeDetailModal.css";
 import "../styles/SessionDetailModal.css";
 
@@ -22,8 +23,17 @@ function SessionDetailModal({ session, onClose }) {
 
         <div className="modal-section">
           <h3>Session Footage</h3>
-          <div className="footage-placeholder">
-            <p>Recorded footage will be replayable here once the ESP32 camera module is integrated.</p>
+          <div className="video-player-wrapper" style={{ marginTop: "10px", width: "100%", borderRadius: "4px", overflow: "hidden", backgroundColor: "#000" }}>
+            <video
+              controls
+              playsInline
+              preload="metadata"
+              style={{ width: "100%", maxHeight: "380px", display: "block" }}
+            >
+              <source src={sessionVideoAsset} type="video/mp4" />
+              <source src="/media/Video%20Project%202.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
         </div>
 

@@ -93,10 +93,16 @@ let userCompanyMap = {};
 let userNameMap = {};
 let companyThresholds = {};
 const deviceDecibels = {};
+let latestMicDecibels = null;
+const pendingCheckInTrigger = {};
 
 function getAmbientDecibels(deviceId, rawSound) {
   if (typeof rawSound === "number" && !isNaN(rawSound) && rawSound > 0) {
     return rawSound;
+  }
+  if (typeof latestMicDecibels === "number" && !isNaN(latestMicDecibels) && latestMicDecibels > 0) {
+    deviceDecibels[deviceId] = latestMicDecibels;
+    return latestMicDecibels;
   }
   let current = deviceDecibels[deviceId];
   if (current === undefined || current === null) {
@@ -262,6 +268,46 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  if (req.method === "POST" && req.url.startsWith("/api/mic-decibels")) {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk.toString(); });
+    req.on("end", () => {
+      try {
+        const payload = JSON.parse(body);
+        const devId = String(payload.deviceId || "2");
+        if (typeof payload.decibels === "number") {
+          latestMicDecibels = Math.round(payload.decibels);
+          deviceDecibels[devId] = latestMicDecibels;
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, decibels: latestMicDecibels }));
+      } catch (err) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.method === "POST" && req.url.startsWith("/api/trigger-checkin")) {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk.toString(); });
+    req.on("end", () => {
+      try {
+        const payload = JSON.parse(body);
+        const devId = String(payload.deviceId || "2");
+        pendingCheckInTrigger[devId] = true;
+        console.log(`[${new Date().toLocaleTimeString()}] Check-in trigger queued for Device #${devId} (Reason: ${payload.reason || "AI sound detection"})`);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: true, deviceId: devId }));
+      } catch (err) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === "POST" && req.url.startsWith("/api/data")) {
     let body = "";
     req.on("data", (chunk) => { body += chunk.toString(); });
@@ -363,6 +409,12 @@ const server = http.createServer((req, res) => {
 
         const employeeName = userNameMap[deviceId] || userNameMap[String(payload.id)] || defaultUserNames[deviceId] || defaultUserNames[String(payload.id)] || "";
 
+        let shouldTriggerCheckIn = false;
+        if (pendingCheckInTrigger[deviceId]) {
+          shouldTriggerCheckIn = true;
+          pendingCheckInTrigger[deviceId] = false;
+        }
+
         const responseDoc = {
           tempMaxThreshold,
           tempMinThreshold,
@@ -371,6 +423,8 @@ const server = http.createServer((req, res) => {
           soundMaxThreshold,
           employeeName,
           announcement: announcementToSend,
+          sound: ambientSound,
+          triggerCheckIn: shouldTriggerCheckIn,
         };
 
         const jsonString = JSON.stringify(responseDoc);

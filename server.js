@@ -94,15 +94,34 @@ let userNameMap = {};
 let companyThresholds = {};
 const deviceDecibels = {};
 let latestMicDecibels = null;
+let peakMicDecibels = 0;
+let lastPeakTimestamp = 0;
 const pendingCheckInTrigger = {};
 
-function getAmbientDecibels(deviceId, rawSound) {
-  if (typeof rawSound === "number" && !isNaN(rawSound) && rawSound > 0) {
-    return rawSound;
+function updateMicDecibels(dbVal, devId = "2") {
+  const now = Date.now();
+  const rawDb = Math.round(dbVal);
+
+  if (rawDb > peakMicDecibels || (now - lastPeakTimestamp > 1800)) {
+    peakMicDecibels = rawDb;
+    lastPeakTimestamp = now;
+  } else {
+    const elapsedSec = (now - lastPeakTimestamp) / 1000.0;
+    peakMicDecibels = Math.max(rawDb, Math.round(peakMicDecibels - elapsedSec * 5));
   }
-  if (typeof latestMicDecibels === "number" && !isNaN(latestMicDecibels) && latestMicDecibels > 0) {
+
+  latestMicDecibels = peakMicDecibels;
+  deviceDecibels[devId] = peakMicDecibels;
+}
+
+function getAmbientDecibels(deviceId, rawSound) {
+  const now = Date.now();
+  if (typeof latestMicDecibels === "number" && !isNaN(latestMicDecibels) && latestMicDecibels > 0 && (now - lastPeakTimestamp < 5000)) {
     deviceDecibels[deviceId] = latestMicDecibels;
     return latestMicDecibels;
+  }
+  if (typeof rawSound === "number" && !isNaN(rawSound) && rawSound > 0) {
+    return rawSound;
   }
   let current = deviceDecibels[deviceId];
   if (current === undefined || current === null) {
@@ -181,7 +200,9 @@ onSnapshot(
 );
 
 const server = http.createServer((req, res) => {
-  console.log(`[${new Date().toLocaleTimeString()}] HTTP ${req.method} ${req.url} from ${req.socket.remoteAddress}`);
+  if (!req.url.startsWith("/api/mic-decibels")) {
+    console.log(`[${new Date().toLocaleTimeString()}] HTTP ${req.method} ${req.url} from ${req.socket.remoteAddress}`);
+  }
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -276,8 +297,7 @@ const server = http.createServer((req, res) => {
         const payload = JSON.parse(body);
         const devId = String(payload.deviceId || "2");
         if (typeof payload.decibels === "number") {
-          latestMicDecibels = Math.round(payload.decibels);
-          deviceDecibels[devId] = latestMicDecibels;
+          updateMicDecibels(payload.decibels, devId);
         }
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ success: true, decibels: latestMicDecibels }));
@@ -410,9 +430,12 @@ const server = http.createServer((req, res) => {
         const employeeName = userNameMap[deviceId] || userNameMap[String(payload.id)] || defaultUserNames[deviceId] || defaultUserNames[String(payload.id)] || "";
 
         let shouldTriggerCheckIn = false;
-        if (pendingCheckInTrigger[deviceId]) {
+        if (pendingCheckInTrigger[deviceId] || pendingCheckInTrigger[String(payload.id)] || pendingCheckInTrigger["2"] || pendingCheckInTrigger["1"]) {
           shouldTriggerCheckIn = true;
           pendingCheckInTrigger[deviceId] = false;
+          pendingCheckInTrigger[String(payload.id)] = false;
+          pendingCheckInTrigger["2"] = false;
+          pendingCheckInTrigger["1"] = false;
         }
 
         const responseDoc = {

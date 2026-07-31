@@ -36,7 +36,7 @@ export default function AudioClassifier() {
 
   const sendDecibelsToServer = async (dbVal) => {
     const now = Date.now();
-    if (now - lastDecibelSendRef.current < 400) return;
+    if (now - lastDecibelSendRef.current < 1500) return;
     lastDecibelSendRef.current = now;
 
     try {

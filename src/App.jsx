@@ -10,6 +10,7 @@ import Settings from "./pages/settings/Settings";
 import Profile from "./pages/Profile";
 import Larp from "./pages/Larp";
 import SupervisorAlertBanner from "./components/SupervisorAlertBanner";
+import GlobalAudioSensor from "./components/GlobalAudioSensor";
 import "./styles/App.css";
 import AudioTest from "./components/AudioTest";
 import AudioClassifier from "./components/AudioClassifier";
@@ -24,6 +25,7 @@ function App() {
        location.pathname !== "/audio-monitor" && <Navbar />}
 
       <SupervisorAlertBanner />
+      <GlobalAudioSensor />
 
       <Routes>
         <Route path="/" element={<Home />} />
